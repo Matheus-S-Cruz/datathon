@@ -11,9 +11,6 @@ env/
 *.csv.xz
 Novo_Caged_MOV_Limpo.csv
 
-# Jupyter execution outputs geradas pelo pipeline (reproduzíveis)
-outputs/
-
 # Ambiente / SO
 .DS_Store
 .env

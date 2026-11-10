@@ -64,5 +64,5 @@ Cobrir os **3 eixos de investigação**:
 ## 📌 Status do repositório
 - [x] `dataset/` completo (CAGED em Parquet + municípios + dicionário)
 - [x] Entregável 1 — Notebook/Script de pipeline (`notebooks/01_pipeline_caged_sc.ipynb`)
-- [ ] Entregável 2 — Dashboard analítico
+- [x] Entregável 2 — Dashboard analítico (`dashboard/app.py` — Streamlit)
 - [ ] Entregável 3 — Pitch (slides, 3 min)
