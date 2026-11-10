@@ -9,6 +9,7 @@ pandas>=2.2          # pequenas tabelas agregadas e integração com gráficos
 openpyxl>=3.1        # leitura do dicionário de dados (.xlsx)
 tabulate>=0.9        # exportação de tabelas em Markdown (relatórios)
 
-# Visualização e dashboard (próximas etapas — ainda não utilizados no código)
-# plotly>=5.20
-# streamlit>=1.35
+# Interface web (CAGED Explorer — dashboard/). Testado com streamlit 1.67 e plotly 7.1.
+# streamlit >= 1.50 é necessário (st.badge, st.navigation, temas claro/escuro separados).
+streamlit>=1.50
+plotly>=5.20

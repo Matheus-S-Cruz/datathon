@@ -18,6 +18,7 @@ import pyarrow as pa
 import pyarrow.csv as pacsv
 import streamlit as st
 
+from dashboard import formatting as fmt
 from dashboard.services import database
 from dashboard.services.catalog import BY_NAME, CAGED_COLUMNS, EDUCATION_ORDER, MONEY, q
 from dashboard.services.dictionary import NO_DESCRIPTION
@@ -181,14 +182,7 @@ def describe(sheet: str | None, code) -> str:
     return labels_for(sheet).get(str(code), NO_DESCRIPTION)
 
 
-MONTHS = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"]
-
-
-def competencia_label(value) -> str:
-    text = str(value or "")
-    if len(text) == 6 and text.isdigit() and 1 <= int(text[4:]) <= 12:
-        return f"{MONTHS[int(text[4:]) - 1]}/{text[:4]}"
-    return text
+competencia_label = fmt.competencia   # '202509' -> 'set/2025'
 
 
 # ----------------------------------------------------------------- dimensões (pág. 6/7)
@@ -552,6 +546,21 @@ def education_distribution(dim_key: str, f: Filters, groups: list[str]) -> pd.Da
         FROM caged {where} GROUP BY 1, 2
     """, [*params, *groups])
     return add_labels(df, "escolaridade")
+
+
+def dictionary_coverage() -> pd.DataFrame:
+    """Por coluna codificada: códigos do CAGED (normalizados) ausentes na aba do dicionário."""
+    rows = []
+    for c in CAGED_COLUMNS:
+        if not c.sheet:
+            continue
+        df = run(f"""SELECT {c.typed} AS codigo, count(*) AS n FROM caged
+                     WHERE {c.typed} NOT IN (SELECT codigo FROM rotulos WHERE variavel = ?)
+                     GROUP BY 1 ORDER BY n DESC""", [c.sheet])
+        rows.append({"coluna": c.name, "aba do dicionário": c.sheet,
+                     "códigos fora do dicionário": len(df), "registros afetados": int(df["n"].sum()),
+                     "exemplos": ", ".join(f"{r.codigo} ({fmt.integer(r.n)})" for r in df.head(30).itertuples())})
+    return pd.DataFrame(rows)
 
 
 def is_money(column_name: str) -> bool:

@@ -1,0 +1,20 @@
+# Configuração do CAGED Explorer (Streamlit).
+[browser]
+# Não envia estatísticas de uso: a aplicação funciona sem internet.
+gatherUsageStats = false
+
+[server]
+# Arquivo do CAGED é grande; só tabelas pequenas são enviadas ao navegador.
+maxUploadSize = 50
+runOnSave = false
+
+[client]
+toolbarMode = "viewer"
+
+# Temas claro e escuro definidos separadamente: o Streamlit continua seguindo o tema
+# do sistema (uma seção [theme] única fixaria o tema claro). Os gráficos acompanham.
+[theme.light]
+primaryColor = "#2a78d6"
+
+[theme.dark]
+primaryColor = "#3987e5"
