@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.venv/
+venv/
+env/
+
+# Dados brutos pesados (use a versão .parquet versionada em dataset/)
+*.csv.gz
+*.csv.xz
+Novo_Caged_MOV_Limpo.csv
+
+# Ambiente / SO
+.DS_Store
+.env
