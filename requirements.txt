@@ -1,0 +1,14 @@
+# Versões mínimas testadas localmente em 10/11/2026 (Python 3.14).
+# No Google Colab: !pip install -r requirements.txt
+
+# Leitura e processamento
+duckdb>=1.1          # SQL direto sobre o Parquet, sem carregar tudo na memória
+pyarrow>=15          # leitura/escrita de Parquet
+polars>=1.0          # alternativa a pandas para dataframes grandes
+pandas>=2.2          # pequenas tabelas agregadas e integração com gráficos
+openpyxl>=3.1        # leitura do dicionário de dados (.xlsx)
+tabulate>=0.9        # exportação de tabelas em Markdown (relatórios)
+
+# Visualização e dashboard (próximas etapas — ainda não utilizados no código)
+# plotly>=5.20
+# streamlit>=1.35
