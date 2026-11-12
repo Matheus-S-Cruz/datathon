@@ -9,6 +9,7 @@ Esta pasta contém as bases de dados do desafio.
 | `Novo_Caged_MOV_Limpo.parquet` | Microdados do Novo CAGED (movimentações) dos últimos 12 meses em Santa Catarina. **3.397.416 registros**, 30 colunas. | Parquet (compressão `zstd`) |
 | `Municipios_SC_limpo.csv` | Dados demográficos dos municípios de SC (cruzar via código do município). | CSV (`,`) |
 | `Dicionario_de_dados.xlsx` | Definição e metadados de cada campo das bases. | XLSX |
+| `municipios_sc_coords.parquet` | Centroides (lat/lon) dos 295 municípios de SC, para o mapa do dashboard. Derivado da malha oficial do IBGE via [geodata-br](https://github.com/tbrugz/geodata-br). | Parquet |
 
 ## Por que Parquet?
 

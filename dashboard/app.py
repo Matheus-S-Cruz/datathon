@@ -67,6 +67,20 @@ sal_grau = carregar("salario_por_grau")
 macro = carregar("macrofamilias_cbo")
 
 
+@st.cache_data(show_spinner=False)
+def carregar_coords():
+    """Coordenadas (centroides) dos municípios de SC para o mapa. Opcional."""
+    caminho = os.path.join(BASE, "dataset", "municipios_sc_coords.parquet")
+    if not os.path.exists(caminho):
+        return None
+    c = pd.read_parquet(caminho)
+    c["mun_cod"] = c["mun_cod"].astype(str)
+    return c[["mun_cod", "lat", "lon"]]
+
+
+coords = carregar_coords()
+
+
 # --------------------------------------------------------------------------- #
 # Cabeçalho + pergunta de negócio
 # --------------------------------------------------------------------------- #
@@ -161,6 +175,63 @@ with aba_terr:
         "Saldo por 10 mil habitantes normaliza a comparação entre cidades de portes "
         "diferentes. Giro alto com saldo baixo/negativo sinaliza apagão (rotatividade)."
     )
+
+    # ---------------------- Mapa de calor interativo -----------------------
+    st.markdown(
+        "**Mapa de calor de Santa Catarina** — passe o mouse sobre as bolhas para ver a "
+        "cidade. 🟢 verde = expansão · 🔴 vermelho = apagão (saldo por 10 mil hab.)."
+    )
+    if coords is None:
+        st.warning(
+            "Arquivo de coordenadas não encontrado "
+            "(`dataset/municipios_sc_coords.parquet`). O mapa foi omitido."
+        )
+    else:
+        mapa_df = saldo_mun_filtrado.merge(coords, on="mun_cod", how="inner").copy()
+        mapa_df = mapa_df[mapa_df["saldo_por_10k"].notna()]
+        if mapa_df.empty:
+            st.caption("Sem municípios para exibir com os filtros atuais.")
+        else:
+            # Escala simétrica em torno de zero para o divergente ficar honesto
+            lim = float(mapa_df["saldo_por_10k"].abs().quantile(0.95)) or 1.0
+            mapa_df["tam"] = mapa_df["giro_por_10k"].fillna(0).clip(lower=1)
+            fig_map = px.scatter_map(
+                mapa_df,
+                lat="lat", lon="lon",
+                color="saldo_por_10k",
+                size="tam",
+                size_max=28,
+                zoom=6.1,
+                center={"lat": -27.5, "lon": -50.6},
+                color_continuous_scale="RdYlGn",
+                range_color=[-lim, lim],
+                hover_name="municipio",
+                custom_data=["saldo", "saldo_por_10k", "giro_por_10k",
+                             "salario_medio", "populacao"],
+                height=560,
+                labels={"saldo_por_10k": "Saldo / 10 mil hab."},
+            )
+            fig_map.update_traces(
+                hovertemplate=(
+                    "<b>%{hovertext}</b><br>"
+                    "Saldo líquido: %{customdata[0]:+.0f} vagas<br>"
+                    "Saldo por 10 mil hab.: %{customdata[1]:.1f}<br>"
+                    "Giro (rotatividade) /10 mil: %{customdata[2]:.0f}<br>"
+                    "Salário médio: R$ %{customdata[3]:,.0f}<br>"
+                    "População: %{customdata[4]:,.0f}<extra></extra>"
+                )
+            )
+            fig_map.update_layout(
+                map_style="carto-positron",
+                margin={"r": 0, "t": 0, "l": 0, "b": 0},
+            )
+            st.plotly_chart(fig_map, width="stretch")
+            st.caption(
+                "Tamanho da bolha = giro/rotatividade por 10 mil hab. "
+                "Bolha grande e vermelha = alta rotatividade com saldo negativo (apagão)."
+            )
+
+    st.divider()
     col_a, col_b = st.columns(2)
     with col_a:
         top_exp = saldo_mun_filtrado.sort_values("saldo_por_10k", ascending=False).head(15)

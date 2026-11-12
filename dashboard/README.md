@@ -24,8 +24,10 @@ todos reagem aos filtros.
 e população mínima do município.
 
 **Abas de storytelling:**
-- 🗺️ **Território** — top municípios em expansão e em apagão (saldo por 10 mil hab.) e
-  dispersão saldo × giro (identifica rotatividade).
+- 🗺️ **Território** — **mapa de calor interativo de SC** (bolhas por município com hover
+  mostrando cidade, saldo, rotatividade, salário e população; verde = expansão, vermelho =
+  apagão), top municípios em expansão e em apagão (saldo por 10 mil hab.) e dispersão
+  saldo × giro (identifica rotatividade).
 - 🏭 **Setores** — saldo por setor (CNAE), destacando os industriais, e os maiores polos
   industriais (município × setor).
 - 🎓 **Renda × Escolaridade** — salário por grau de instrução (compressão salarial),
