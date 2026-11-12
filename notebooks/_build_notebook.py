@@ -129,6 +129,13 @@ df["salario"]        = to_float_br(df["salário"])
 df["salario_fixo"]   = to_float_br(df.get("valorsaláriofixo", pd.Series(index=df.index)))
 df["idade"]          = pd.to_numeric(df["idade"], errors="coerce")
 df["grau_cod"]       = pd.to_numeric(df["graudeinstrução"], errors="coerce")
+# Escolaridade: os códigos NÃO são uma escala numérica (80 = pós-graduação fica entre
+# 9 = superior e 10 = mestrado; 99 = não identificado). Convertemos para a posição
+# ordinal 1..12 e deixamos 99 de fora, em vez de tirar a média dos códigos.
+ORDEM_INSTR = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "80", "10", "11"]
+_g = df["graudeinstrução"].astype(str).str.strip().str.replace(r"\\.0$", "", regex=True)
+df["grau_ord"]       = _g.map({c: i + 1 for i, c in enumerate(ORDEM_INSTR)})   # 99 -> NaN
+df["superior"]       = _g.isin(["9", "80", "10", "11"]).astype(float).where(df["grau_ord"].notna())
 df["mun_cod"]        = df["município"].astype(str).str.strip()
 
 # Filtro de exclusões (defensivo)
@@ -219,7 +226,8 @@ code("""def agrega(grupo_cols, nome_pop="populacao"):
         movimentacoes=("saldo", "size"),
         salario_medio=("salario", "mean"),
         salario_mediano=("salario", "median"),
-        grau_medio=("grau_cod", "mean"),
+        grau_medio=("grau_ord", "mean"),       # escala ordinal 1..12 (ver seção 2)
+        pct_superior=("superior", "mean"),    # fração com superior completo ou mais
         idade_media=("idade", "mean"),
     ).reset_index()
     g["giro"] = g["admissoes"] + g["desligamentos"]
@@ -286,9 +294,10 @@ print(perfil.to_string(index=False))
 # Salário médio por grau de instrução (há compressão salarial?)
 sal_grau = (dfm.groupby("grau_cod")
               .agg(grau=("grau_instr","first"),
+                   grau_ord=("grau_ord","first"),
                    salario_medio=("salario","mean"),
                    n=("salario","size"))
-              .reset_index().sort_values("grau_cod"))
+              .reset_index().sort_values("grau_ord", na_position="last"))
 print("\\nSalário médio por grau de instrução:")
 print(sal_grau[["grau","salario_medio","n"]].to_string(index=False))""")
 
@@ -327,7 +336,8 @@ macro = (dfm.groupby("cbo_grande_grupo")
                 admissoes=("admissao","sum"),
                 desligamentos=("desligamento","sum"),
                 salario_medio=("salario","mean"),
-                grau_medio=("grau_cod","mean"),
+                grau_medio=("grau_ord","mean"),
+                pct_superior=("superior","mean"),
                 n_cbos=("cbo2002ocupação","nunique"))
            .reset_index().sort_values("saldo", ascending=False))
 print(macro.to_string(index=False))""")
