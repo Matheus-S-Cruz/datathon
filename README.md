@@ -1,170 +1,167 @@
 # Raio-X do Mercado de Trabalho Industrial em Santa Catarina
 
-Projeto da equipe para o **Datathon 2026** da Semana Acadêmica do UniSENAI (Bacharelado em
-Ciência de Dados e IA).
+Projeto da equipe para o **Datathon CDIA 2026 — UniSENAI** (Bacharelado em Ciência de Dados e IA).
+Atuando como uma consultoria de dados, transformamos os microdados do **Novo CAGED** em um painel de
+inteligência territorial e setorial para a indústria catarinense.
 
 > **Pergunta central de negócio**
-> "Quais regiões e setores industriais de Santa Catarina estão enfrentando apagão de mão de obra
-> ou expansão acelerada, e como os indicadores de renda e escolaridade explicam esses gargalos?"
+> "Quais regiões e setores industriais de Santa Catarina estão enfrentando **apagão de mão de obra**
+> ou **expansão acelerada**, e como os indicadores de **renda e escolaridade** explicam esses gargalos?"
 
-Transformamos os microdados do **Novo CAGED** (3,4 milhões de admissões e desligamentos em SC,
-set/2025 a ago/2026) em um painel de inteligência territorial e setorial, cruzando com dados
-demográficos dos 295 municípios e agrupando ocupações (CBO) em macrofamílias com apoio de IA generativa.
+O projeto cruza 3,4 milhões de admissões e desligamentos em SC (declarados de set/2025 a ago/2026)
+com os dados dos 295 municípios e com **bases públicas do IBGE**: estoque de emprego formal (CEMPRE),
+PIB dos Municípios, divisão regional e malha municipal. Também agrupa as ocupações (CBO) em
+macrofamílias.
 
 ## Status
 
-| Etapa | Situação |
+| Entregável / etapa | Situação |
 |---|---|
-| Auditoria do repositório e perfil das bases | ✅ concluída — ver [`docs/diagnostico_inicial.md`](docs/diagnostico_inicial.md) |
-| **CAGED Explorer** (exploração e validação dos dados) | ✅ concluído — ver [`docs/guia_explorador.md`](docs/guia_explorador.md) |
-| Pipeline de tratamento | ⏳ aguardando validação das decisões metodológicas |
-| Agrupamento de CBOs com IA | ⏳ |
-| Dashboard executivo | ⏳ |
-| Pitch | ⏳ |
+| Auditoria do repositório e perfil das bases | ✅ [`docs/diagnostico_inicial.md`](docs/diagnostico_inicial.md) |
+| **1. Pipeline** (notebook) | ✅ [`notebooks/01_pipeline_caged_sc.ipynb`](notebooks/01_pipeline_caged_sc.ipynb) |
+| Enriquecimento com bases públicas (IBGE) | ✅ [`src/enrichment/ibge.py`](src/enrichment/ibge.py) → `data/external/` |
+| **2. Dashboard** (Streamlit) | ✅ `dashboard/` — painel executivo + explorador + análises |
+| Agrupamento de CBOs com IA | ✅ baseline determinístico; refino por LLM opcional (`OPENAI_API_KEY`) |
+| **3. Pitch** (3 min) | ⏳ |
 
-## CAGED Explorer — Santa Catarina
+Checklist completo em [`ENTREGAVEIS.md`](ENTREGAVEIS.md).
 
-Aplicação web para a equipe **ver, consultar e conferir** as bases antes da modelagem. Ela não é o
-dashboard executivo final: não calcula índice de escassez nem classifica municípios.
+## Dashboard
 
-| Página | Para que serve |
-|---|---|
-| Visão geral | Volumes (admissões, desligamentos, saldo), período, bases e situação da validação. |
-| Explorador do Novo CAGED | Tabela paginada com pesquisa, filtros, ordenação, amostras, registro individual e exportação CSV. |
-| Municípios | Os 295 municípios, valores ausentes, registro completo e gráficos de população, PIB per capita e IDHM. |
-| Dicionário de dados | As 23 abas do dicionário, pesquisa de códigos e correspondência campo × coluna. |
-| Resultados da auditoria | 31 constatações recalculadas dos arquivos e comparadas com a auditoria inicial. |
-| Exploração estatística | Estatísticas descritivas, correlações de Pearson e Spearman e gráficos de dispersão. |
-| Relações territoriais e setoriais | Agregações por município × CNAE × CBO × escolaridade × salário × competência. |
+Organizado em **três seções** no menu lateral:
 
-Como usar cada página: [`docs/guia_explorador.md`](docs/guia_explorador.md).
+| Seção | Páginas | Para que serve |
+|---|---|---|
+| **Visão geral** | Painel executivo | 5 indicadores-chave e os 6 gráficos que respondem à pergunta central: mapa coroplético, regiões (crescimento × rotatividade), setores, macrofamílias na indústria, salário por escolaridade e dispersão renda × escolaridade. |
+| **Exploração e consulta** | Explorador do Novo CAGED · Municípios · Tabelas analíticas · Dicionário de dados · Bases e validação | Filtros, tabelas paginadas, registro individual, exportação CSV, dicionário pesquisável, tabelas do pipeline e do IBGE para download. |
+| **Análises complementares** | Território · Setores · Renda e escolaridade · Macrofamílias · Contexto regional (IBGE) · Exploração estatística · Relações · Auditoria | Os demais gráficos do projeto, para aprofundar sem poluir a visão geral. |
 
-### Tecnologias
+Os filtros das páginas analíticas (só indústria, seções CNAE, região intermediária do IBGE,
+população mínima) ficam na barra lateral e acompanham a navegação entre páginas. Os temas claro e
+escuro seguem o sistema. Como usar cada página: [`docs/guia_explorador.md`](docs/guia_explorador.md).
 
-- **Streamlit**: interface web, em Python puro.
-- **DuckDB**: consultas SQL direto sobre o Parquet, sem carregar os 3,4 milhões de linhas na memória.
-- **Plotly**: gráficos interativos.
-- **Pandas**: apenas para resultados agregados e amostras pequenas.
-- **OpenPyXL**: leitura do dicionário (.xlsx).
+## Como rodar
 
-### Pré-requisitos
-
-- Python 3.10 ou superior (testado com 3.14).
-- Os três arquivos de dados nos caminhos da seção [Dados](#dados) (já estão no repositório).
-
-### Instalação
+**Pré-requisito:** Python 3.10+ (testado com 3.14). Todos os dados já estão no repositório.
 
 ```bash
-git clone <url-do-repositorio>
+git clone https://github.com/Matheus-S-Cruz/datathon.git
 cd datathon
 python -m venv .venv
-# Windows: .venv\Scripts\activate    |    Linux/macOS: source .venv/bin/activate
+# Windows (PowerShell): .\.venv\Scripts\Activate.ps1   |   Linux/macOS: source .venv/bin/activate
 pip install -r requirements.txt
-```
-
-### Como executar
-
-Sempre a partir da **raiz do repositório**:
-
-```bash
 streamlit run dashboard/app.py
 ```
 
-Acesse **<http://localhost:8501>** no navegador. Para usar outra porta:
-`streamlit run dashboard/app.py --server.port 8502`.
+Acesse **<http://localhost:8501>**. Depois de instalado, o dashboard funciona **sem internet**: as
+bases do IBGE estão versionadas em `data/external/`. Só o mapa de fundo do mapa de bolhas
+(página Território) e a fonte Inter precisam de rede; sem ela, as bolhas e uma fonte do sistema
+aparecem no lugar.
 
-Depois que as dependências estiverem instaladas e os dados no lugar, a aplicação funciona
-**sem internet**: não há chamadas externas e a telemetria do Streamlit está desligada em
-`.streamlit/config.toml`.
+> **Windows — erro ao ativar o ambiente?** Rode uma vez:
+> `Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned`
 
-**Google Colab** (opcional, não testado nesta versão): o Colab não abre `localhost` diretamente.
-Uma forma possível:
+### Reexecutar o pipeline (opcional)
 
-```python
-!git clone <url-do-repositorio>
-%cd datathon
-!pip install -q -r requirements.txt
-!nohup streamlit run dashboard/app.py --server.port 8501 --server.headless true > streamlit.log 2>&1 &
-from google.colab import output
-output.serve_kernel_port_as_window(8501)   # abre a aplicação em outra aba
+As tabelas em `outputs/` já estão versionadas. Para regerá-las:
+
+```bash
+python notebooks/_build_notebook.py        # regera o .ipynb a partir do código-fonte
+jupyter nbconvert --to notebook --execute --inplace notebooks/01_pipeline_caged_sc.ipynb
+```
+
+Para atualizar as bases do IBGE (precisa de internet):
+
+```bash
+python -m src.enrichment.ibge
 ```
 
 ### Testes
 
 ```bash
-python -m unittest tests.test_services -v    # camada de dados (~15 s)
-python -m unittest tests.test_app_pages -v   # renderiza as 7 páginas sem navegador (~2 min)
+python -m pytest tests/test_analytics.py -q       # tabelas do pipeline + IBGE (~5 s)
+python -m unittest tests.test_services -v         # camada DuckDB (~15 s)
+python -m unittest tests.test_app_pages -v        # renderiza as 14 páginas sem navegador (~8 min)
 ```
+
+## Metodologia (resumo)
+
+1. **Ingestão e validação** das três bases + dicionário de códigos (DuckDB sobre o Parquet).
+2. **Limpeza e tipagem** (salário com vírgula decimal, idade, códigos com zero à esquerda).
+3. **Join** CAGED × municípios pelo código de 6 dígitos (o IBGE usa 7, com dígito verificador).
+4. **Métricas:** saldo, **saldo por 10 mil habitantes** (métrica do guia), giro, escolaridade em
+   **escala ordinal 1–12** e **% com superior completo**.
+5. **Enriquecimento com o IBGE:** **crescimento do emprego formal** (saldo ÷ assalariados do CEMPRE
+   2024), **taxa de rotatividade** (mín(admissões, desligamentos) ÷ estoque, conceito do DIEESE),
+   peso da indústria no VAB e agregação por **regiões geográficas** oficiais.
+6. **Macrofamílias:** os 2.207 CBOs agrupados pelo Grande Grupo da CBO-2002, com refino opcional por LLM.
+7. **Exportação** das tabelas-base em `outputs/` para o dashboard.
+
+## Principais achados
+
+- **Gargalo de qualificação na indústria:** nas seções B, C, D e F, o saldo é **negativo** entre
+  técnicos de nível médio (−2.782), dirigentes e gerentes (−1.955) e profissionais de nível superior
+  (−1.052), enquanto a base operacional cresce (+6.232).
+- **Expansão regional:** Caçador (+2,44%) e Florianópolis (+2,12%) lideram o crescimento do emprego
+  formal sobre o estoque; Criciúma tem o menor (+0,43%).
+- **Reposição:** Caçador e Blumenau têm as maiores rotatividades (~70% e ~69%): muita troca de
+  trabalhadores.
+- **Renda × escolaridade:** o salário médio quase não muda do analfabeto ao médio completo
+  (R$ 2.076 a R$ 2.354) e salta no superior completo (R$ 3.990).
+
+> **Limites:** o CAGED mede fluxo, não estoque; as taxas sobre o CEMPRE 2024 são aproximações (o
+> CEMPRE municipal não é aberto por setor, por isso essas taxas não aparecem com recorte setorial);
+> o VAB por atividade municipal mais recente é de 2021; o IDHM é de 2010; salários declarados podem
+> conter valores extremos.
+
+## Dados
+
+| Base | Arquivo | Fonte |
+|---|---|---|
+| Novo CAGED — movimentações SC | `data/raw/Novo_Caged_MOV_Limpo.parquet` | Organização do Datathon (MTE) — 3.397.416 registros |
+| Municípios de SC | `data/reference/Municipios_SC_limpo.csv` | Organização (IBGE, PNUD, DATASUS, Siconfi) — 295 municípios |
+| Dicionário de dados | `data/reference/Dicionario_de_dados.xlsx` | Layout oficial do Novo CAGED — 23 abas |
+| Centroides dos municípios | `data/reference/municipios_sc_coords.parquet` | Malha IBGE via [geodata-br](https://github.com/tbrugz/geodata-br) |
+| CEMPRE 2024 | `data/external/ibge_cempre_2024.parquet` | IBGE, SIDRA tabela 9509 |
+| PIB dos Municípios | `data/external/ibge_pib_municipal.parquet` | IBGE, SIDRA tabela 5938 (PIB 2023; VAB por atividade 2021) |
+| Divisão regional | `data/external/ibge_regioes_sc.parquet` | IBGE, API de Localidades |
+| Malha municipal | `data/external/ibge_malha_sc.geojson` | IBGE, API de Malhas v3 |
+
+O CSV original do CAGED (~395 MB) **não é versionado** por causa do limite de 100 MB do GitHub; o
+Parquet tem os mesmos dados. Origem, formato e cuidados de leitura: [`data/README.md`](data/README.md).
 
 ## Estrutura
 
 ```text
-.streamlit/config.toml       # configuração do Streamlit (sem telemetria; temas claro/escuro)
-context/                     # regras do desafio
-  Guia do Participante.md
-  originais/                 # .docx e .pptx oficiais
-dashboard/                   # CAGED Explorer (Streamlit)
-  app.py                     # ponto de entrada e menu lateral
-  formatting.py              # números, R$, datas e competências no padrão brasileiro
-  views/                     # uma página por arquivo (01_overview … 07_relations)
-  components/                # interface: filtros, tabelas, gráficos, selos e cartões
-  services/                  # dados: conexão DuckDB, consultas SQL, auditoria, catálogo de colunas
-data/                        # ver data/README.md
-  raw/                       # Novo CAGED em Parquet (versionado, 44 MB)
-  reference/                 # dicionário de dados e municípios de SC
-  processed/                 # gerado pelo pipeline (não versionado)
-docs/
-  diagnostico_inicial.md     # diagnóstico técnico e de negócio
-  dicionario_analitico.md    # campo a campo: significado, valores, uso
-  plano_de_execucao.md       # arquitetura e próximas etapas
-  guia_explorador.md         # como usar o CAGED Explorer
-reports/
-  perfil_bases.md            # perfil gerado automaticamente
+.streamlit/config.toml       # tema (claro/escuro), sem telemetria
+context/                     # regras do desafio (Guia do Participante; .docx e .pptx originais)
+dashboard/
+  app.py                     # ponto de entrada: menu com as 3 seções
+  views/                     # uma página por arquivo (00_painel, 01–07 explorador, 10–15 análises)
+  components/                # interface: cards, KPIs, filtros, tabelas, gráficos
+  services/                  # dados: DuckDB (explorador) e analytics (pipeline + IBGE)
+  assets/                    # logotipo
+data/
+  raw/ · reference/          # bases do desafio (ver data/README.md)
+  external/                  # bases públicas do IBGE (versionadas)
+notebooks/                   # Entregável 1 — pipeline (+ gerador _build_notebook.py)
+outputs/                     # tabelas-base geradas pelo pipeline (consumidas pelo painel)
+docs/ · reports/             # diagnóstico, dicionário analítico, plano, guia, perfil das bases
 src/
-  config.py                  # caminhos do projeto (usados também pelo dashboard)
+  config.py                  # caminhos do projeto
+  enrichment/ibge.py         # download das bases do IBGE
   validation/profile_sources.py
-tests/                       # testes do CAGED Explorer (unittest)
+tests/
 requirements.txt
 ```
-
-O perfil das bases em Markdown continua disponível:
-
-```bash
-python -m src.validation.profile_sources > reports/perfil_bases.md
-```
-
-## Dados
-
-| Base | Arquivo | Registros |
-|---|---|---|
-| Novo CAGED — movimentações SC | `data/raw/Novo_Caged_MOV_Limpo.parquet` | 3.397.416 |
-| Municípios de SC | `data/reference/Municipios_SC_limpo.csv` | 295 |
-| Dicionário de dados | `data/reference/Dicionario_de_dados.xlsx` | 23 abas |
-
-O CSV original do CAGED (~395 MB) **não é versionado** (limite de 100 MB do GitHub); o Parquet
-contém os mesmos dados. Origem, formato e cuidados de leitura em [`data/README.md`](data/README.md).
-
-### Como adicionar ou atualizar as bases
-
-1. Substitua o arquivo **no mesmo caminho e com o mesmo nome** (caminhos definidos em `src/config.py`).
-   O CAGED deve continuar em Parquet; para gerar a partir do CSV, veja `data/README.md`.
-2. Não é preciso reiniciar: o Explorer detecta a mudança (data e tamanho do arquivo) e refaz as
-   consultas na próxima interação. Na dúvida, use o menu ⋮ → *Clear cache* ou reinicie o `streamlit`.
-3. Abra **Visão geral → Situação da validação** e **Resultados da auditoria**: as checagens comparam
-   as contagens com a auditoria inicial (ex.: 3.397.416 registros). Uma base nova vai mostrar
-   divergências esperadas; atualize os valores de referência em `dashboard/services/profiling.py`
-   (`documentado`/`confere`) e em `docs/diagnostico_inicial.md` depois de validar.
-4. Se colunas forem renomeadas, ajuste o catálogo em `dashboard/services/catalog.py`.
-5. Rode os testes (`python -m unittest discover tests`).
-
-## Tecnologias do projeto
-
-Python · DuckDB (processamento sem carregar tudo na memória) · PyArrow/Parquet · Pandas
-(tabelas agregadas) · Streamlit e Plotly (CAGED Explorer e dashboard) · IA generativa
-(classificação de CBOs, com revisão humana — etapa futura).
 
 ## Regras do repositório
 
 - Não versionar CSVs pesados, saídas de `data/processed/` nem credenciais (`.env`, chaves de API).
 - Nunca editar arquivos em `data/raw/`; todo tratamento fica no código.
 - Documentos em português; código, pastas e módulos em inglês.
+
+## Tecnologias
+
+Python · DuckDB · PyArrow/Parquet · pandas · Jupyter · Streamlit · Plotly · APIs do IBGE (SIDRA,
+Localidades, Malhas)

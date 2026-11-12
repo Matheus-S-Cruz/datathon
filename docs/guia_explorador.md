@@ -1,7 +1,7 @@
 # Guia do CAGED Explorer — Santa Catarina
 
 Guia de uso para toda a equipe, inclusive quem não usa SQL nem estatística no dia a dia.
-Para instalar e abrir a aplicação, veja o [README](../README.md#como-executar)
+Para instalar e abrir a aplicação, veja o [README](../README.md#como-rodar)
 (`streamlit run dashboard/app.py` e depois <http://localhost:8501>).
 
 ## O que é (e o que não é)
@@ -9,6 +9,11 @@ Para instalar e abrir a aplicação, veja o [README](../README.md#como-executar)
 O Explorer serve para **entender e conferir os dados** antes da modelagem. Todos os números são
 calculados na hora, a partir dos arquivos em `data/`. Ele **não** traz índice de escassez,
 ranking definitivo de municípios, previsões nem recomendações automáticas. Essas etapas vêm depois.
+
+> **Onde fica no dashboard:** as páginas deste guia estão nas seções **Exploração e consulta**
+> (Explorador, Municípios, Dicionário, Bases e validação) e **Análises complementares** (Exploração
+> estatística, Relações, Auditoria) do menu. A antiga "Visão geral" do Explorer agora se chama
+> **Bases e validação**; a **Visão geral** do menu é o painel executivo (ver `dashboard/README.md`).
 
 Três ideias para ter em mente em todas as páginas:
 
@@ -49,7 +54,7 @@ validada para daltonismo nos temas claro e escuro.
 
 ---
 
-## 1. Visão geral
+## 1. Bases e validação (antiga Visão geral)
 
 **O que mostra**
 

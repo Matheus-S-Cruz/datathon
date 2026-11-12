@@ -1,39 +1,61 @@
-# Dashboard Analítico (Entregável 2)
+# Dashboard — Raio-X do Trabalho Industrial (Entregável 2)
 
-Painel interativo em **Streamlit** que responde à pergunta central do desafio, consumindo
-as tabelas-base geradas pelo pipeline (`outputs/*.parquet`).
-
-## Como executar
+Painel em **Streamlit** que responde à pergunta central do desafio. Execute a partir da raiz:
 
 ```bash
-pip install -r dashboard/requirements.txt
-streamlit run dashboard/app.py
+pip install -r requirements.txt
+streamlit run dashboard/app.py      # http://localhost:8501
 ```
 
-Abre em `http://localhost:8501`.
+## Organização
 
-> As tabelas em `outputs/` já estão versionadas, então o dashboard roda direto.
-> Se quiser regenerá-las, execute antes o notebook `notebooks/01_pipeline_caged_sc.ipynb`.
+| Seção | Página | Dados |
+|---|---|---|
+| **Visão geral** | Painel executivo — 5 KPIs + 6 gráficos essenciais e leituras calculadas | `outputs/` + `data/external/` |
+| **Exploração e consulta** | Explorador do Novo CAGED (filtros, paginação, amostras, registro, CSV) | Parquet bruto via DuckDB |
+| | Municípios · Dicionário de dados · Bases e validação | bases de `data/` |
+| | Tabelas analíticas (pipeline e IBGE, com busca e download) | `outputs/` + `data/external/` |
+| **Análises complementares** | Território · Setores · Renda e escolaridade · Macrofamílias · Contexto regional (IBGE) | `outputs/` + `data/external/` |
+| | Exploração estatística · Relações · Resultados da auditoria | Parquet bruto via DuckDB |
 
-## O que o painel mostra
+### Painel executivo — gráficos essenciais
 
-**KPIs (topo):** saldo de vagas, admissões, desligamentos, salário médio e nº de municípios —
-todos reagem aos filtros.
+| Gráfico | Responde |
+|---|---|
+| Mapa coroplético (malha IBGE) — saldo por 10 mil hab. ou crescimento do emprego | **Onde** há expansão e retração |
+| Regiões: crescimento do emprego × rotatividade | Expansão real ou **só reposição** |
+| Saldo por seção CNAE, indústria em destaque | **Quais setores** |
+| Saldo por macrofamília de CBO na indústria | Gargalo **operacional ou técnico** |
+| Salário médio por grau de instrução | Quanto a **escolaridade** paga |
+| Dispersão municipal salário × % com superior | **Renda × escolaridade** explicam o saldo? |
 
-**Filtros (barra lateral):** apenas setores industriais (B, C, D, F), seleção de setores (CNAE)
-e população mínima do município.
+**KPIs:** saldo de vagas; saldo por 10 mil habitantes; crescimento do emprego formal (saldo ÷
+assalariados CEMPRE 2024); taxa de rotatividade (conceito DIEESE); salário médio e % com superior.
 
-**Abas de storytelling:**
-- 🗺️ **Território** — **mapa de calor interativo de SC** (bolhas por município com hover
-  mostrando cidade, saldo, rotatividade, salário e população; verde = expansão, vermelho =
-  apagão), top municípios em expansão e em apagão (saldo por 10 mil hab.) e dispersão
-  saldo × giro (identifica rotatividade).
-- 🏭 **Setores** — saldo por setor (CNAE), destacando os industriais, e os maiores polos
-  industriais (município × setor).
-- 🎓 **Renda × Escolaridade** — salário por grau de instrução (compressão salarial),
-  admitidos vs. desligados por escolaridade, e dispersão municipal salário × escolaridade.
-- 🤖 **Macrofamílias (IA)** — saldo por macrofamília ocupacional (agrupamento de CBOs),
-  revelando se o apagão é operacional ou técnico/engenharia.
+### Filtros
 
-Gráficos: **barras** (território/setor), **dispersão** (renda × escolaridade, rotatividade)
-e tabelas de apoio — cobrindo os tipos exigidos pelo guia.
+Nas páginas analíticas, a barra lateral tem: **apenas setores industriais** (B, C, D, F), **seções
+CNAE**, **região geográfica intermediária** (IBGE) e **população mínima**. O recorte acompanha a
+navegação entre páginas. Com recorte setorial, as taxas sobre o estoque ficam indisponíveis: o
+CEMPRE municipal não é aberto por setor. O Explorador mantém seu próprio formulário de filtros,
+que só consulta ao clicar em *Aplicar filtros*.
+
+## Identidade visual
+
+- Tema claro/escuro em `.streamlit/config.toml`; cards, KPIs e cabeçalhos em `components/ui.py`.
+- Paleta de gráficos em `components/charts.py`, validada para daltonismo: **azul = admissões/saldo
+  positivo**, **laranja = desligamentos/saldo negativo**, escala divergente com meio cinza,
+  magnitudes em uma única matiz. Nunca dois eixos Y.
+- Números no padrão brasileiro (`formatting.py`).
+
+## Código
+
+```text
+app.py                 # menu (st.navigation) com as 3 seções, logotipo e CSS
+views/00_painel.py     # Visão geral
+views/01–07_*.py       # CAGED Explorer (exploração/validação)
+views/10–15_*.py       # análises complementares e tabelas analíticas
+components/            # ui (cards, KPIs), charts, filters, tables
+services/analytics.py  # tabelas do pipeline + IBGE e recortes
+services/queries.py    # consultas DuckDB do Explorer
+```

@@ -5,7 +5,8 @@ Esta pasta contém as bases do desafio, separadas por papel:
 ```text
 data/
 ├── raw/          # dados brutos fornecidos pela organização (nunca editar)
-├── reference/    # tabelas de apoio: dicionário e dados municipais
+├── reference/    # tabelas de apoio: dicionário, dados municipais e centroides
+├── external/     # bases públicas do IBGE (src/enrichment/ibge.py; versionadas)
 └── processed/    # saídas do pipeline (gerado pelo código; NÃO versionado)
 ```
 
@@ -15,6 +16,11 @@ data/
 |---|---|---|---|
 | `raw/Novo_Caged_MOV_Limpo.parquet` | Organização do Datathon (CSV no Google Drive), convertido pela equipe | 43,9 MB | Microdados de movimentações do Novo CAGED em SC. 3.397.416 registros, 30 colunas, todas como texto. |
 | `reference/Municipios_SC_limpo.csv` | Organização do Datathon (dados IBGE e outras fontes, ver rodapé do próprio arquivo) | 41 KB | 295 municípios de SC + 1 linha de rodapé com notas e fontes (HTML). |
+| `reference/municipios_sc_coords.parquet` | Malha oficial do IBGE via [geodata-br](https://github.com/tbrugz/geodata-br) | 15 KB | Centroides (lat/lon) dos 295 municípios, para o mapa de bolhas. |
+| `external/ibge_cempre_2024.parquet` | IBGE — CEMPRE 2024, SIDRA tabela 9509 | 14 KB | Unidades locais, empresas, pessoal ocupado, assalariados e salário médio por município. |
+| `external/ibge_pib_municipal.parquet` | IBGE — PIB dos Municípios, SIDRA tabela 5938 | 9 KB | PIB 2023 e VAB por atividade 2021 (último ano com essa abertura por município), em mil reais. |
+| `external/ibge_regioes_sc.parquet` | IBGE — API de Localidades | 11 KB | Micro/mesorregião e regiões geográficas imediata e intermediária. |
+| `external/ibge_malha_sc.geojson` | IBGE — API de Malhas v3 | 400 KB | Polígonos dos municípios (`codarea` = código IBGE de 7 dígitos). |
 | `reference/Dicionario_de_dados.xlsx` | Organização do Datathon (layout oficial do Novo CAGED) | 294 KB | Aba `Layout` com as variáveis e 22 abas com as tabelas de códigos. |
 
 Fonte original do CSV (opcional, ~395 MB, não versionado):

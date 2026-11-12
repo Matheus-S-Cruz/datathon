@@ -1,7 +1,7 @@
 # Entregáveis — Datathon CDIA 2026 (Raio-X do Mercado de Trabalho Industrial em SC)
 
-Checklist consolidada a partir do **PowerPoint oficial** (`documentos_apoio/Datathon CDIA 2026 - UniSENAI.pptx`)
-e do **Guia do Participante** (`documentos_apoio/Guia do Participante.docx`).
+Checklist consolidada a partir do **PowerPoint oficial** (`context/originais/Datathon CDIA 2026 - UniSENAI.pptx`)
+e do **Guia do Participante** (`context/originais/Guia do Participante.docx`).
 
 Tudo deve ser submetido em um **repositório Git público** (GitHub/GitLab/Bitbucket) e entregue
 pelo **formulário oficial** (`https://bit.ly/4jBn07X`).
@@ -62,7 +62,7 @@ Cobrir os **3 eixos de investigação**:
 ---
 
 ## 📌 Status do repositório
-- [x] `dataset/` completo (CAGED em Parquet + municípios + dicionário)
+- [x] `data/` completo (CAGED em Parquet + municípios + dicionário) + bases do IBGE em `data/external/`
 - [x] Entregável 1 — Notebook/Script de pipeline (`notebooks/01_pipeline_caged_sc.ipynb`)
-- [x] Entregável 2 — Dashboard analítico (`dashboard/app.py` — Streamlit)
+- [x] Entregável 2 — Dashboard analítico (`dashboard/app.py` — Streamlit: visão geral, exploração e análises complementares)
 - [ ] Entregável 3 — Pitch (slides, 3 min)
