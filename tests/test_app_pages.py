@@ -13,8 +13,9 @@ from pathlib import Path
 from streamlit.testing.v1 import AppTest
 
 APP = Path(__file__).resolve().parents[1] / "dashboard" / "app.py"
-PAGES = ["01_overview", "02_caged_explorer", "03_municipalities", "04_dictionary", "05_audit",
-         "06_statistics", "07_relations"]
+PAGES = ["00_painel", "01_overview", "02_caged_explorer", "03_municipalities", "04_dictionary", "05_audit",
+         "06_statistics", "07_relations", "10_territorio", "11_setores", "12_renda_escolaridade",
+         "13_macrofamilias", "14_contexto_ibge", "15_tabelas"]
 
 logging.getLogger("streamlit").setLevel(logging.ERROR)
 
@@ -45,6 +46,22 @@ class TestPagesRender(unittest.TestCase):
         self.assertEqual(metrics["Desligamentos"], "1.677.967")
         self.assertEqual(metrics["Saldo"], "+41.482")
         self.assertEqual(metrics["Registros do CAGED"], "3.397.416")
+
+    def test_painel_is_default_and_matches_audit(self):
+        at = AppTest.from_file(str(APP), default_timeout=600)
+        at.run()
+        self.assertEqual(problems(at), [])
+        self.assertEqual(at.title[0].value, "Raio-X do Mercado de Trabalho Industrial")
+        html = " ".join(str(h.proto.body) for h in at.get("html"))
+        self.assertIn("+41.482", html)          # mesmo saldo da auditoria
+        self.assertIn("1.719.449 admissões", html)
+
+    def test_painel_industrial_scope(self):
+        at = AppTest.from_file(str(APP), default_timeout=600)
+        at.run()
+        at.toggle(key="an_ind").set_value(True).run()
+        at.selectbox(key="an_regiao").set_value("Joinville").run()
+        self.assertEqual(problems(at), [])
 
     def test_explorer_filter_and_pagination(self):
         at = run_page("02_caged_explorer")
