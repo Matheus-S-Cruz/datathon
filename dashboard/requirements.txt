@@ -1,4 +1,8 @@
-streamlit>=1.37
-pandas>=2.0
+# Somente o dashboard (o requirements.txt da raiz instala também o pipeline)
+streamlit>=1.67
+pandas>=2.2
 pyarrow>=15
-plotly>=5.22
+openpyxl>=3.1
+plotly>=5.20
+shapely>=2.0
+duckdb>=1.1

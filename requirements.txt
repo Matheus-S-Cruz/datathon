@@ -1,0 +1,17 @@
+# Instala tudo (pipeline + dashboard):  pip install -r requirements.txt
+
+# Pipeline (notebook)
+pandas>=2.2
+pyarrow>=15
+openpyxl>=3.1
+jupyter
+
+# Dashboard
+streamlit>=1.67   # mapa 3D usa st.components.v2
+plotly>=5.20
+shapely>=2.0      # geometria das mesorregiões (mapa 3D)
+duckdb>=1.1       # páginas de "Consulta e Exploração dos Dados" (SQL direto sobre o Parquet)
+tabulate>=0.9     # relatórios em Markdown (src/validation)
+
+# Reprodução opcional da etapa de IA (ia/classificar_cbos.py)
+anthropic>=2.0
