@@ -56,15 +56,15 @@ pd.set_option("display.width", 200)
 
 # Caminhos (ajuste se executar de outro diretório)
 BASE = ".." if os.path.basename(os.getcwd()) == "notebooks" else "."
-DATASET = os.path.join(BASE, "dataset")
+DATASET = os.path.join(BASE, "data")  # data/raw + data/reference
 OUTPUTS = os.path.join(BASE, "outputs")
 os.makedirs(OUTPUTS, exist_ok=True)
 
-CAGED_PARQUET = os.path.join(DATASET, "Novo_Caged_MOV_Limpo.parquet")
-MUNIC_CSV     = os.path.join(DATASET, "Municipios_SC_limpo.csv")
-DICIONARIO    = os.path.join(DATASET, "Dicionario_de_dados.xlsx")
+CAGED_PARQUET = os.path.join(DATASET, "raw", "Novo_Caged_MOV_Limpo.parquet")
+MUNIC_CSV     = os.path.join(DATASET, "reference", "Municipios_SC_limpo.csv")
+DICIONARIO    = os.path.join(DATASET, "reference", "Dicionario_de_dados.xlsx")
 
-print("dataset:", os.path.abspath(DATASET))
+print("data:", os.path.abspath(DATASET))
 print("outputs:", os.path.abspath(OUTPUTS))""")
 
 # ------------------------------------------------------------------ 1. INGESTÃO
