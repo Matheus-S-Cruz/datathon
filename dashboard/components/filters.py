@@ -103,3 +103,52 @@ def filter_panel(key: str, include=ALL, title: str = "Filtros") -> Q.Filters:
             st.form_submit_button("Aplicar filtros", icon=":material/filter_alt:", type="primary",
                                   width="stretch")
     return Q.Filters(**kw)
+
+
+# --------------------------------------------------------------------------- #
+# Recorte das páginas analíticas (Visão geral e Análises complementares).
+# Mesmos filtros do dashboard original — só indústria, seções CNAE, população
+# mínima — mais a região geográfica intermediária do IBGE. As chaves são
+# compartilhadas entre as páginas: o recorte acompanha a navegação.
+# --------------------------------------------------------------------------- #
+
+def _keep(key: str) -> None:
+    """Mantém o valor do widget no session_state ao trocar de página."""
+    if key in st.session_state:
+        st.session_state[key] = st.session_state[key]
+
+
+def analysis_scope(sections: bool = True, population: bool = True, region: bool = True):
+    from dashboard.services import analytics as A
+
+    setores = A.sectors()
+    labels = dict(zip(setores["secao"], setores["setor"]))
+    with st.sidebar:
+        st.subheader("Recorte da análise")
+        sec: tuple[str, ...] = ()
+        if sections:
+            for k in ("an_ind", "an_secoes"):
+                _keep(k)
+            only_ind = st.toggle("Apenas setores industriais", key="an_ind",
+                                 help="Seções CNAE B (Extrativas), C (Transformação), D (Eletricidade e gás) "
+                                      "e F (Construção).")
+            pool = [s for s in setores["secao"] if not only_ind or s in A.INDUSTRIAL_SECTIONS]
+            chosen = st.multiselect("Seções CNAE", pool, key="an_secoes", placeholder="Todas do grupo acima",
+                                    format_func=lambda s: f"{s} · {labels.get(s, s)}")
+            chosen = [s for s in chosen if s in pool]
+            sec = tuple(chosen) if chosen else (tuple(pool) if only_ind else ())
+        reg = None
+        if region:
+            _keep("an_regiao")
+            reg = st.selectbox("Região geográfica intermediária (IBGE)", ["Todas"] + A.region_names(),
+                               key="an_regiao")
+            reg = None if reg == "Todas" else reg
+        pop = 0
+        if population:
+            _keep("an_pop")
+            pop = st.select_slider("População mínima do município", options=[0, 5_000, 10_000, 20_000, 50_000,
+                                                                              100_000, 200_000],
+                                   key="an_pop", format_func=lambda v: "sem limite" if v == 0 else fmt.integer(v),
+                                   help="Exclui municípios pequenos, cujas taxas por 10 mil habitantes oscilam "
+                                        "muito com poucas vagas.")
+    return A.Scope(secoes=sec, min_pop=int(pop), regiao=reg)

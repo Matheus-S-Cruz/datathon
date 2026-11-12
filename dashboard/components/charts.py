@@ -9,6 +9,7 @@ Decisões de cor (paleta validada para daltonismo, ver README):
 
 from __future__ import annotations
 
+import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
@@ -49,7 +50,9 @@ def _layout(fig: go.Figure, title: str, x_title: str | None = None, y_title: str
             height: int = 380, legend: bool = True) -> go.Figure:
     fig.update_layout(
         title=dict(text=title, x=0, xanchor="left", font=dict(size=15)),
-        separators=",.", height=height, margin=dict(l=8, r=8, t=56, b=8),
+        separators=",.", height=height, margin=dict(l=8, r=8, t=56 if title else 30, b=8),
+        paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+        font=dict(family="Inter, system-ui, sans-serif"),
         colorway=SERIES, bargap=0.25, hovermode="closest",
         showlegend=legend,
         legend=dict(orientation="h", yanchor="bottom", y=1.0, xanchor="right", x=1, title=None),
@@ -215,3 +218,175 @@ def line_series(df: pd.DataFrame, x: str, ys: list[tuple[str, str, str]], title:
                         hovertemplate="%{x}<br>" + name + ": %{customdata}<extra></extra>")
     fig.update_layout(hovermode="x unified")
     return _layout(fig, title, None, y_title)
+
+
+# --------------------------------------------------------------------------- #
+# Gráficos do painel analítico. Usados dentro de ui.card(): o título descritivo
+# fica no card, então a figura vai sem título (title="").
+# --------------------------------------------------------------------------- #
+
+
+def in_card(fig: go.Figure, height: int | None = None) -> go.Figure:
+    """Ajusta uma figura para viver dentro de um card: fundo transparente, sem título, margens curtas."""
+    fig.update_layout(title=None, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                      margin=dict(l=4, r=8, t=30 if fig.layout.showlegend is not False else 8, b=4),
+                      font=dict(family="Inter, system-ui, sans-serif"))
+    if height:
+        fig.update_layout(height=height)
+    return fig
+
+
+def _sym_range(values: pd.Series, q: float = 0.95) -> float:
+    lim = float(values.abs().quantile(q)) if len(values) else 1.0
+    return lim or 1.0
+
+
+def choropleth(df: pd.DataFrame, geo: dict, value_col: str, value_title: str, hover_cols: list[tuple],
+               diverging: bool = True, height: int = 520, fmt_value=None, tick_format: str = ",.0f",
+               z_hover: str = ",.1f") -> go.Figure:
+    """Mapa coroplético dos municípios (malha IBGE, sem mapa de fundo: funciona offline).
+    `hover_cols`: lista de (coluna, rótulo, formatador)."""
+    fmt_value = fmt_value or (lambda v: fmt.num(v, 1))
+    custom = [[f(v) for v in df[c]] for c, _, f in hover_cols]
+    lines = "".join(f"<br>{label}: %{{customdata[{i + 1}]}}" for i, (_, label, _) in enumerate(hover_cols))
+    if diverging:
+        lim = _sym_range(df[value_col].dropna())
+        color = dict(colorscale=DIVERGING, zmin=-lim, zmax=lim, zmid=0)
+    else:
+        color = dict(colorscale=SEQUENTIAL)
+    fig = go.Figure(go.Choropleth(
+        geojson=geo, locations=df["mun_cod"], z=df[value_col], featureidkey="id",
+        marker=dict(line=dict(width=0.4, color="rgba(255,255,255,0.85)")),
+        customdata=list(zip(df["municipio"], *custom)),
+        hovertemplate="<b>%{customdata[0]}</b><br>" + value_title + ": %{z:" + z_hover + "}" + lines + "<extra></extra>",
+        colorbar=dict(title=dict(text=value_title, side="right"), thickness=12, len=0.75, outlinewidth=0,
+                      tickformat=tick_format),
+        **color))
+    fig.update_geos(fitbounds="locations", visible=False, bgcolor="rgba(0,0,0,0)", projection_type="mercator")
+    fig.update_layout(separators=",.", height=height, margin=dict(l=0, r=0, t=0, b=0),
+                      paper_bgcolor="rgba(0,0,0,0)", dragmode=False)
+    return fig
+
+
+def emphasis_bars(df: pd.DataFrame, label_col: str, value_col: str, highlight, value_title: str,
+                  highlight_name: str, other_name: str, signed_values: bool = True) -> go.Figure:
+    """Barras horizontais: grupo em destaque em azul, demais em cinza (ênfase, não 8 cores)."""
+    pal = palette()
+    fig = go.Figure()
+    for flag, name, color in [(True, highlight_name, pal["blue"]), (False, other_name, GRAY)]:
+        part = df[highlight == flag]
+        if part.empty:
+            continue
+        text = [fmt.signed(v) if signed_values else fmt.integer(v) for v in part[value_col]]
+        fig.add_bar(y=part[label_col], x=part[value_col], orientation="h", name=name, marker_color=color,
+                    customdata=text, hovertemplate="%{y}<br>" + value_title + ": %{customdata}<extra></extra>")
+    fig.update_yaxes(categoryorder="array", categoryarray=list(df[label_col])[::-1], automargin=True)
+    fig.update_xaxes(tickformat=",d")
+    fig = _layout(fig, "", value_title, None, height=max(360, 24 * len(df) + 60))
+    fig.update_layout(barmode="overlay", bargap=0.3)
+    return fig
+
+
+def signed_hbars(df: pd.DataFrame, label_col: str, value_col: str, value_title: str,
+                 extra: list[tuple] | None = None) -> go.Figure:
+    """Barras horizontais pelo sinal: positivo = azul (lado das admissões), negativo = laranja."""
+    pal = palette()
+    colors = [pal["blue"] if v >= 0 else pal["orange"] for v in df[value_col]]
+    extra = extra or []
+    custom = list(zip([fmt.signed(v) for v in df[value_col]], *[[f(v) for v in df[c]] for c, _, f in extra]))
+    lines = "".join(f"<br>{label}: %{{customdata[{i + 1}]}}" for i, (_, label, _) in enumerate(extra))
+    fig = go.Figure(go.Bar(y=df[label_col], x=df[value_col], orientation="h", marker_color=colors,
+                           customdata=custom,
+                           hovertemplate="<b>%{y}</b><br>" + value_title + ": %{customdata[0]}" + lines
+                                         + "<extra></extra>"))
+    fig.update_yaxes(categoryorder="array", categoryarray=list(df[label_col])[::-1], automargin=True)
+    fig.update_xaxes(tickformat=",~f")
+    return _layout(fig, "", value_title, None, height=max(320, 30 * len(df) + 60), legend=False)
+
+
+def ordinal_bars(df: pd.DataFrame, label_col: str, value_col: str, value_title: str, money: bool = True,
+                 n_col: str | None = None) -> go.Figure:
+    """Uma série em categorias ordenadas (ex.: escolaridade): uma cor só."""
+    f = fmt.brl if money else fmt.integer
+    custom = list(zip([f(v) for v in df[value_col]],
+                      [fmt.integer(v) for v in df[n_col]] if n_col else [""] * len(df)))
+    hov = "%{y}<br>" + value_title + ": %{customdata[0]}" + ("<br>Movimentações: %{customdata[1]}" if n_col else "")
+    fig = go.Figure(go.Bar(y=df[label_col], x=df[value_col], orientation="h", marker_color=palette()["blue"],
+                           customdata=custom, hovertemplate=hov + "<extra></extra>"))
+    fig.update_xaxes(tickformat=",.0f", tickprefix="R$ " if money else "")
+    fig.update_yaxes(autorange="reversed", automargin=True)
+    return _layout(fig, "", value_title, None, height=max(360, 28 * len(df) + 60), legend=False)
+
+
+def bubble(df: pd.DataFrame, x: str, y: str, color: str | None, size: str | None, label: str,
+           x_title: str, y_title: str, color_title: str = "", hover: list[tuple] | None = None,
+           text_labels: bool = False, height: int = 460, x_fmt=None, y_fmt=None,
+           ref_x: float | None = None, ref_y: float | None = None, diverging: bool = True) -> go.Figure:
+    """Dispersão com bolhas. Cor contínua divergente (azul = positivo, laranja = negativo, cinza = 0);
+    sem `color`, todas em azul. Linhas de referência opcionais (médias) dividem quadrantes."""
+    x_fmt = x_fmt or (lambda v: fmt.num(v, 1))
+    y_fmt = y_fmt or (lambda v: fmt.num(v, 1))
+    hover = hover or []
+    d = df.dropna(subset=[x, y]).copy()
+    sizes = None
+    if size:
+        s = d[size].abs().astype(float)
+        sizes = 8 + 34 * np.sqrt(s / s.max()) if s.max() > 0 else 10
+    marker = dict(size=sizes if sizes is not None else 11, opacity=0.8,
+                  line=dict(width=1.5, color="rgba(255,255,255,0.9)"))
+    if color:
+        bar = dict(title=dict(text=color_title, side="right"), thickness=12, len=0.8, outlinewidth=0)
+        if diverging:
+            lim = _sym_range(d[color])
+            marker.update(color=d[color], colorscale=DIVERGING, cmin=-lim, cmax=lim, cmid=0, colorbar=bar)
+        else:
+            marker.update(color=d[color], colorscale=SEQUENTIAL, colorbar=bar)
+    else:
+        marker.update(color=palette()["blue"])
+    custom = list(zip(d[label], [x_fmt(v) for v in d[x]], [y_fmt(v) for v in d[y]],
+                      *[[f(v) for v in d[c]] for c, _, f in hover]))
+    lines = "".join(f"<br>{lab}: %{{customdata[{i + 3}]}}" for i, (_, lab, _) in enumerate(hover))
+    positions = ["top center"] * len(d)
+    if text_labels:  # pontos vizinhos: rótulos para lados opostos em vez de sobrepostos
+        xs, ys = d[x].to_numpy(float), d[y].to_numpy(float)
+        dx, dy = (np.ptp(xs) or 1) * 0.2, (np.ptp(ys) or 1) * 0.12
+        for i in range(len(d)):
+            for j in range(i + 1, len(d)):
+                if abs(xs[i] - xs[j]) < dx and abs(ys[i] - ys[j]) < dy:
+                    left, right = (i, j) if xs[i] <= xs[j] else (j, i)
+                    positions[left], positions[right] = "middle left", "bottom center"
+    fig = go.Figure(go.Scatter(
+        x=d[x], y=d[y], mode="markers+text" if text_labels else "markers", marker=marker,
+        text=d[label] if text_labels else None, textposition=positions,
+        textfont=dict(size=12), customdata=custom, cliponaxis=False,
+        hovertemplate="<b>%{customdata[0]}</b><br>" + x_title + ": %{customdata[1]}<br>" + y_title
+                      + ": %{customdata[2]}" + lines + "<extra></extra>"))
+    for val, axis in [(ref_x, "x"), (ref_y, "y")]:
+        if val is not None:
+            kw = dict(line=dict(color="rgba(137,135,129,0.55)", width=1))
+            (fig.add_vline(x=val, **kw) if axis == "x" else fig.add_hline(y=val, **kw))
+    fig = _layout(fig, "", x_title, y_title, height=height, legend=False)
+    fig.update_xaxes(showgrid=True, gridcolor="rgba(137,135,129,0.18)")
+    if text_labels and len(d) > 1:  # folga lateral para os rótulos não serem cortados na borda
+        lo, hi = float(d[x].min()), float(d[x].max())
+        pad = (hi - lo or 1) * 0.22
+        fig.update_xaxes(range=[lo - pad, hi + pad])
+        lo, hi = float(d[y].min()), float(d[y].max())
+        pad = (hi - lo or 1) * 0.12
+        fig.update_yaxes(range=[lo - pad, hi + pad])
+    return fig
+
+
+def grouped_bars(df: pd.DataFrame, cat_col: str, series_col: str, value_col: str, order: list[str],
+                 colors: dict[str, str], value_title: str) -> go.Figure:
+    """Barras agrupadas para 2 séries de identidade (ex.: admitidos × desligados)."""
+    fig = go.Figure()
+    for name, color in colors.items():
+        part = df[df[series_col] == name].set_index(cat_col).reindex(order).reset_index()
+        fig.add_bar(x=part[cat_col], y=part[value_col], name=name, marker_color=color,
+                    customdata=[fmt.integer(v) for v in part[value_col]],
+                    hovertemplate="%{x}<br>" + name + ": %{customdata}<extra></extra>")
+    fig.update_layout(barmode="group", bargroupgap=0.08)
+    fig.update_yaxes(tickformat=",d")
+    fig.update_xaxes(tickangle=-35)
+    return _layout(fig, "", None, value_title, height=420)

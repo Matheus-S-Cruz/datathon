@@ -1,4 +1,4 @@
-# Configuração do CAGED Explorer (Streamlit).
+# Configuração do dashboard Raio-X do Trabalho Industrial — SC (Streamlit).
 [browser]
 # Não envia estatísticas de uso: a aplicação funciona sem internet.
 gatherUsageStats = false
@@ -13,8 +13,39 @@ toolbarMode = "viewer"
 
 # Temas claro e escuro definidos separadamente: o Streamlit continua seguindo o tema
 # do sistema (uma seção [theme] única fixaria o tema claro). Os gráficos acompanham.
+# Fonte: Inter (Google Fonts); sem internet, cai para a sans-serif do sistema.
+# Os cards, KPIs e cabeçalhos usam o CSS de dashboard/components/ui.py, com os
+# mesmos tokens de cor definidos aqui.
 [theme.light]
 primaryColor = "#2a78d6"
+backgroundColor = "#f3f5f9"
+secondaryBackgroundColor = "#eef1f6"
+textColor = "#1b2433"
+borderColor = "#e3e7ee"
+showWidgetBorder = true
+baseRadius = "10px"
+font = "Inter:https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap, sans-serif"
+headingFontWeights = [700, 650, 600, 600, 600, 600]
+dataframeHeaderBackgroundColor = "#f6f8fb"
+
+[theme.light.sidebar]
+backgroundColor = "#ffffff"
+secondaryBackgroundColor = "#f3f5f9"
+borderColor = "#e3e7ee"
 
 [theme.dark]
 primaryColor = "#3987e5"
+backgroundColor = "#111418"
+secondaryBackgroundColor = "#1d2229"
+textColor = "#e6e9ef"
+borderColor = "#2a3039"
+showWidgetBorder = true
+baseRadius = "10px"
+font = "Inter:https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap, sans-serif"
+headingFontWeights = [700, 650, 600, 600, 600, 600]
+dataframeHeaderBackgroundColor = "#1d2229"
+
+[theme.dark.sidebar]
+backgroundColor = "#171b21"
+secondaryBackgroundColor = "#1d2229"
+borderColor = "#2a3039"
