@@ -252,6 +252,65 @@ print(terr.sort_values("saldo_por_10k", ascending=False)[display_cols].head(10).
 print("\\nTOP 10 RETRAÇÃO / APAGÃO (menor saldo por 10 mil hab.):")
 print(terr.sort_values("saldo_por_10k")[display_cols].head(10).to_string(index=False))""")
 
+# ------------------------------------------------------------------ 5b. IBGE
+md("""### 5.1 Enriquecimento com bases públicas do IBGE
+
+O CAGED mede **fluxo** (admissões e desligamentos), não **estoque** de empregos. Para
+normalizar melhor do que só pela população, cruzamos com bases oficiais do IBGE baixadas por
+`src/enrichment/ibge.py` (APIs públicas, versionadas em `data/external/`):
+
+| Base | Uso |
+|---|---|
+| **CEMPRE 2024** (SIDRA 9509) — pessoal ocupado assalariado | denominador do emprego formal: **saldo / estoque** e **taxa de rotatividade** |
+| **PIB dos Municípios** (SIDRA 5938) — PIB 2023 e VAB por atividade 2021 | peso da **indústria** no valor adicionado municipal |
+| **Divisão regional** (API de Localidades) | agregação por **região geográfica intermediária e imediata** |
+| **Malha municipal** (API de Malhas) | mapa coroplético no dashboard |
+
+Métricas novas:
+- `cresc_emprego_pct` = saldo do CAGED / assalariados CEMPRE 2024 × 100 — quanto o emprego formal
+  cresceu em 12 meses em relação ao estoque de partida;
+- `rotatividade_pct` = mín(admissões, desligamentos) / assalariados × 100 — conceito do DIEESE:
+  a parte do fluxo que é **reposição** (troca de trabalhadores) e não criação líquida de vagas.
+
+> Premissa: o CEMPRE de 2024 é o estoque mais recente publicado e antecede o período do CAGED
+> (set/2025–ago/2026). As taxas são aproximações e não substituem a RAIS.
+""")
+
+code("""EXTERNAL = os.path.join(BASE, "data", "external")
+ibge = (pd.read_parquet(os.path.join(EXTERNAL, "ibge_regioes_sc.parquet"))
+          .merge(pd.read_parquet(os.path.join(EXTERNAL, "ibge_cempre_2024.parquet")), on="codigo_ibge")
+          .merge(pd.read_parquet(os.path.join(EXTERNAL, "ibge_pib_municipal.parquet")), on="codigo_ibge"))
+ibge["mun_cod"] = ibge["codigo_ibge"].str[:6]          # mesma chave de 6 dígitos do CAGED
+print("Municípios IBGE:", len(ibge), "| sem par no CAGED:",
+      len(set(ibge["mun_cod"]) - set(terr["mun_cod"])))
+
+terr = terr.merge(ibge.drop(columns=["nome_ibge"]), on="mun_cod", how="left")
+terr["cresc_emprego_pct"] = terr["saldo"] / terr["assalariados"] * 100
+terr["rotatividade_pct"]  = terr[["admissoes", "desligamentos"]].min(axis=1) / terr["assalariados"] * 100
+
+def agrega_regiao(nivel):
+    soma = ["admissoes", "desligamentos", "saldo", "movimentacoes", "populacao", "assalariados",
+            "pib_2023", "vab_total_2021", "vab_industria_2021"]
+    g = terr.groupby(nivel, as_index=False)[soma].sum()
+    g = g.rename(columns={nivel: "regiao"}).assign(nivel=nivel)
+    g["saldo_por_10k"]      = g["saldo"] / g["populacao"] * 10_000
+    g["cresc_emprego_pct"]  = g["saldo"] / g["assalariados"] * 100
+    g["rotatividade_pct"]   = g[["admissoes", "desligamentos"]].min(axis=1) / g["assalariados"] * 100
+    g["part_industria_vab_2021"] = g["vab_industria_2021"] / g["vab_total_2021"]
+    # salário e escolaridade ponderados pelo nº de movimentações de cada município
+    for col in ["salario_medio", "grau_medio", "pct_superior"]:
+        w = terr.dropna(subset=[col])
+        media = w.groupby(nivel).apply(lambda d: np.average(d[col], weights=d["movimentacoes"]),
+                                       include_groups=False).rename(col)
+        g = g.merge(media, left_on="regiao", right_index=True, how="left")
+    return g
+
+regioes = pd.concat([agrega_regiao("regiao_intermediaria"), agrega_regiao("regiao_imediata")],
+                    ignore_index=True)
+print(regioes[regioes["nivel"] == "regiao_intermediaria"]
+      [["regiao", "saldo", "cresc_emprego_pct", "rotatividade_pct", "part_industria_vab_2021"]]
+      .sort_values("cresc_emprego_pct", ascending=False).to_string(index=False))""")
+
 # ------------------------------------------------------------------ 6. SETOR
 md("""## 6. Eixo setorial — setores industriais que lideram
 
@@ -340,7 +399,21 @@ macro = (dfm.groupby("cbo_grande_grupo")
                 pct_superior=("superior","mean"),
                 n_cbos=("cbo2002ocupação","nunique"))
            .reset_index().sort_values("saldo", ascending=False))
-print(macro.to_string(index=False))""")
+print(macro.to_string(index=False))
+
+# Mesmo agrupamento, só nos setores industriais (B, C, D, F): o gargalo da INDÚSTRIA é
+# operacional ou técnico?
+macro_ind = (dfm[dfm["seção"].isin(SETORES_INDUSTRIAIS)].groupby("cbo_grande_grupo")
+               .agg(saldo=("saldo","sum"),
+                    admissoes=("admissao","sum"),
+                    desligamentos=("desligamento","sum"),
+                    salario_medio=("salario","mean"),
+                    grau_medio=("grau_ord","mean"),
+                    pct_superior=("superior","mean"),
+                    n_cbos=("cbo2002ocupação","nunique"))
+               .reset_index().sort_values("saldo", ascending=False))
+print("\\nSó setores industriais:")
+print(macro_ind.to_string(index=False))""")
 
 code("""# 8.2 (Opcional) Refino via LLM — nomeia macrofamílias a partir dos top CBOs
 def refinar_macrofamilias_llm(top_n=60):
@@ -391,6 +464,8 @@ code("""saidas = {
     "perfil_adm_desl.parquet":      perfil,
     "salario_por_grau.parquet":     sal_grau,
     "macrofamilias_cbo.parquet":    macro,
+    "macrofamilias_industria.parquet": macro_ind,
+    "agg_regiao.parquet":           regioes,
 }
 for nome, tabela in saidas.items():
     caminho = os.path.join(OUTPUTS, nome)
