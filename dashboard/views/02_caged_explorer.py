@@ -78,7 +78,7 @@ def record_view(linha: int) -> None:
 
 
 def main() -> None:
-    ui.page_header("Explorador do Novo CAGED",
+    ui.section_header("Exploração e consulta", "Explorador do Novo CAGED",
                    "Consulta sob demanda ao Parquet (3,4 milhões de linhas). Só a página visível é enviada ao navegador.")
     ui.explain("Cada linha é **uma movimentação** (uma admissão ou um desligamento), não uma pessoa nem uma vaga. "
                "Os valores aparecem **exatamente como estão no arquivo** (texto). Use a aba *Registro individual* "

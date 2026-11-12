@@ -45,7 +45,7 @@ def group_label(df: pd.DataFrame, dims: list[str]) -> pd.Series:
 
 
 def main() -> None:
-    ui.page_header("Relações territoriais e setoriais",
+    ui.section_header("Análises complementares", "Relações territoriais e setoriais",
                    "Combine município, setor, ocupação, escolaridade, salário e competência. "
                    "Medidas descritivas — ainda não há índice de escassez nem classificação de municípios.")
     f = filters.filter_panel("rel")

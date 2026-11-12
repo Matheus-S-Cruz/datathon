@@ -9,8 +9,8 @@ from dashboard.services import queries as Q
 
 
 def main() -> None:
-    ui.page_header("CAGED Explorer — Santa Catarina",
-                   "Datathon CDIA 2026 · UniSENAI — Raio-X do Mercado de Trabalho e Vagas Industriais em SC")
+    ui.section_header("Exploração e consulta", "Bases e validação",
+                   subtitle="Volumes, período e situação da validação das três bases fornecidas pela organização.")
 
     st.markdown(
         "> **Pergunta central de negócio**  \n"

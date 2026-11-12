@@ -60,7 +60,7 @@ def field_table(sheets: dict[str, pd.DataFrame]) -> pd.DataFrame:
 
 
 def main() -> None:
-    ui.page_header("Dicionário de dados", "Arquivo oficial `Dicionario_de_dados.xlsx` (layout do Novo CAGED).")
+    ui.section_header("Exploração e consulta", "Dicionário de dados", "Arquivo oficial `Dicionario_de_dados.xlsx` (layout do Novo CAGED).")
     sheets = _sheets(data_signature())
     st.caption(f"{len(sheets)} abas: `Layout` (variáveis) + {len(sheets) - 1} tabelas de códigos.")
 

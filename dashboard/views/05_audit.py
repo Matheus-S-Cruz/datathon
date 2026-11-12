@@ -86,7 +86,7 @@ EXPANDED = {"B2", "B3", "B6", "C2"}
 
 
 def main() -> None:
-    ui.page_header("Resultados da auditoria",
+    ui.section_header("Análises complementares", "Resultados da auditoria",
                    "Cada constatação é recalculada agora a partir dos arquivos e comparada com o valor publicado em "
                    "docs/diagnostico_inicial.md.")
     with st.spinner("Recalculando as constatações (a primeira vez leva cerca de 30 segundos)…"):

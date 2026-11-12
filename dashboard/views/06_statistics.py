@@ -174,7 +174,7 @@ def municipal_level() -> None:
 
 
 def main() -> None:
-    ui.page_header("Exploração estatística",
+    ui.section_header("Análises complementares", "Exploração estatística",
                    "Relações entre variáveis quantitativas. Resultados exploratórios — associação, não causa.")
     level = st.segmented_control("Nível de análise", ["Registros do CAGED", "Municípios"],
                                  default="Registros do CAGED", key="stat_level") or "Registros do CAGED"

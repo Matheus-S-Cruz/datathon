@@ -21,7 +21,7 @@ def _load(signature):
 
 
 def main() -> None:
-    ui.page_header("Municípios de Santa Catarina",
+    ui.section_header("Exploração e consulta", "Municípios de Santa Catarina",
                    "Base `Municipios_SC_limpo.csv` já limpa: sem a linha de rodapé, sem a coluna vazia, '-' como ausente.")
     from dashboard.services.database import data_signature
     res = _load(data_signature())
