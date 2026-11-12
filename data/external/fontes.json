@@ -1,0 +1,9 @@
+{
+  "baixado_em": "2026-11-12",
+  "fontes": {
+    "regioes": "https://servicodados.ibge.gov.br/api/v1/localidades/estados/42/municipios",
+    "cempre": "IBGE, Cadastro Central de Empresas (CEMPRE) 2024 — SIDRA tabela 9509",
+    "pib": "IBGE, PIB dos Municípios — SIDRA tabela 5938 (mil reais, preços correntes): PIB 2023; VAB por atividade 2021, último ano publicado por município",
+    "malha": "https://servicodados.ibge.gov.br/api/v3/malhas/estados/42 (intrarregiao=municipio)"
+  }
+}
