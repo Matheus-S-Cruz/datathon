@@ -39,13 +39,20 @@ ind = D.indicadores(cubo)
 pop = D.populacao(regiao)
 
 # ------------------------------------------------------------------------ cabeçalho
-st.title("Raio-X do Mercado de Trabalho em Santa Catarina")
-st.caption("Novo CAGED · declarações de set/2025 a ago/2026 · 3,4 milhões de admissões e desligamentos")
-st.info(
-    "**Pergunta central:** quais regiões e setores industriais de SC enfrentam **apagão de mão de "
-    "obra** ou **expansão acelerada**, e como **renda e escolaridade** explicam esses gargalos?",
-    icon=":material/help:",
-)
+# Título, subtítulo colado ao título e a chamada da pergunta central em texto simples.
+st.html("""
+<style>
+  .cab-titulo { font-size: 2.6rem; font-weight: 700; line-height: 1.15; margin: 0; padding: 0; }
+  .cab-sub    { font-size: .875rem; opacity: .65; margin: .15rem 0 0 0; }
+  .cab-chamada{ font-size: .95rem; margin: .9rem 0 .2rem 0; opacity: .9; }
+  .observacao { font-size: .9rem; line-height: 1.45; margin-top: .4rem; }
+  .observacao .rotulo { font-weight: 600; opacity: .7; }
+</style>
+<div class="cab-titulo">Raio-X do Mercado de Trabalho em Santa Catarina</div>
+<p class="cab-sub">Novo CAGED · declarações de set/2025 a ago/2026 · 3,4 milhões de admissões e desligamentos</p>
+<p class="cab-chamada">Descubra quais regiões e setores industriais de SC enfrentam <b>apagão de mão de obra</b>
+ou <b>expansão acelerada</b>, e como <b>renda e escolaridade</b> explicam esses gargalos.</p>
+""")
 
 # --------------------------------------------------------------------- mapa (capa)
 reg = D.carregar("agg_mesorregiao").rename(columns={"mesorregiao": "regiao"}).copy()
@@ -57,35 +64,36 @@ reg["dica_html"] = [
 
 col_mapa, col_kpi = st.columns([3, 2], gap="large")
 with col_mapa:
-    st.caption("Clique numa região para filtrar o painel · clique de novo para voltar ao estado")
     mapa_sc(reg, selecionada=regiao, key="mapa", on_click=ao_clicar)
+    st.caption("Clique numa região para filtrar o painel · clique de novo para voltar ao estado")
 
 with col_kpi:
     st.subheader(nome_recorte + (" · indústria" if apenas_ind else ""))
     k1, k2 = st.columns(2)
-    k1.metric("Saldo de vagas", D.fmt_int(ind.saldo, True))
+    k1.metric("Saldo de vagas", D.fmt_int(ind.saldo, True), border=True)
     k2.metric("Saldo por 10 mil hab.", D.fmt_dec(ind.saldo / pop * 10_000, 1, True),
-              help="Saldo ÷ população × 10.000. Compara regiões de tamanhos diferentes.")
-    k1.metric("Admissões", D.fmt_int(ind.admissoes))
-    k2.metric("Desligamentos", D.fmt_int(ind.desligamentos))
+              help="Saldo ÷ população × 10.000. Compara regiões de tamanhos diferentes.", border=True)
+    k1.metric("Admissões", D.fmt_int(ind.admissoes), border=True)
+    k2.metric("Desligamentos", D.fmt_int(ind.desligamentos), border=True)
     k1.metric("Desligamentos a pedido", D.fmt_pct(ind.pct_a_pedido),
               help="Parcela dos desligamentos feitos pelo próprio trabalhador. Alta = mercado "
-                   "aquecido / dificuldade de reter pessoas (indício de apagão).")
+                   "aquecido / dificuldade de reter pessoas (indício de apagão).", border=True)
     dif = ind.salario_adm - ind.salario_desl
     k2.metric("Salário de admissão", D.fmt_reais(ind.salario_adm),
               delta=f"{'+' if dif >= 0 else '-'}R$ {D.fmt_int(abs(dif))} vs. desligados",
               delta_color="off",
-              help="Média dos salários de admissão (faixa válida de R$ 500 a R$ 50.000).")
+              help="Média dos salários de admissão (faixa válida de R$ 500 a R$ 50.000).", border=True)
 
     # alerta: macrofamília industrial com mais reposição (desliga ≥ contrata) e volume relevante
     macro_r = D.por_grupo(cubo, ["macrofamilia"])
     alerta = macro_r[macro_r["macrofamilia"].isin(D.MACRO_INDUSTRIAIS) & (macro_r["movimentacoes"] > 3000)]
     if not alerta.empty:
         a = alerta.sort_values("reposicao", ascending=False).iloc[0]
-        txt = (f"**{D.NOMES_MACRO[a.macrofamilia]}**: {D.fmt_dec(a.reposicao, 2)} desligamentos por "
-               f"admissão, saldo {D.fmt_int(a.saldo, True)}, {D.fmt_pct(a.pct_a_pedido)} saem a pedido.")
-        (st.warning if a.reposicao >= 1 else st.success)(
-            "**Ponto de atenção:** " + txt, icon=":material/priority_high:")
+        st.html(
+            f'<div class="observacao"><span class="rotulo">Observação:</span> '
+            f'<b>{D.NOMES_MACRO[a.macrofamilia]}</b> tem {D.fmt_dec(a.reposicao, 2)} desligamentos por '
+            f'admissão (saldo {D.fmt_int(a.saldo, True)}) e {D.fmt_pct(a.pct_a_pedido)} das saídas são '
+            f'a pedido do trabalhador.</div>')
     if regiao:
         st.button("Ver Santa Catarina inteira", on_click=ver_sc, icon=":material/zoom_out_map:")
 

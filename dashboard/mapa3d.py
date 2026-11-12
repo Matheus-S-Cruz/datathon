@@ -79,20 +79,25 @@ svg { width: 100%; height: auto; max-height: 62vh; display: block; overflow: vis
    Cada camada da lateral anima de --y0 (empilhada na espessura do bloco) para --y1
    (espalhada do tampo elevado até o fundo do bloco) -> a parede "cresce" junto com a
    subida e fica sempre contínua com a base, sem vão. */
+/* No CSS, a transição do estado de DESTINO é a que vale:
+   - regras de .elev (sem .ativa)  -> usadas na DESCIDA: curta e sem "cauda" lenta no final;
+   - regras de .elev.ativa         -> usadas na SUBIDA: um pouco mais longa e suave. */
 .elev { opacity: 0; pointer-events: none;
-        transition: opacity 0s linear .35s; }           /* some só ao terminar de descer */
+        transition: opacity 0s linear .2s; }            /* some assim que termina de descer */
 .elev.ativa { opacity: 1; pointer-events: auto; transition: opacity 0s; }
 .elev .lado, .elev .tampo {
         transform: translateY(var(--y0));
-        transition: transform .35s cubic-bezier(.3,.7,.3,1), fill .25s ease; }
-.elev.ativa .lado, .elev.ativa .tampo { transform: translateY(var(--y1)); }
+        transition: transform .2s cubic-bezier(.4,0,.7,1), fill .15s ease; }       /* descida */
+.elev.ativa .lado, .elev.ativa .tampo {
+        transform: translateY(var(--y1));
+        transition: transform .35s cubic-bezier(.3,.7,.3,1), fill .25s ease; }     /* subida */
 
 /* sombra: forma fixa já desfocada sob a região; só a opacidade anima (barato),
    então ela acompanha a subida em vez de aparecer depois */
 .elev .sombra { fill: rgba(0,0,0,.30); pointer-events: none;
                 transform: translate(5px, 9px); opacity: 0;
-                transition: opacity .3s ease; }
-.elev.ativa .sombra { opacity: 1; }
+                transition: opacity .15s ease; }
+.elev.ativa .sombra { opacity: 1; transition: opacity .3s ease; }
 
 /* cor: a região que desce volta ao cinza da base JÁ durante a descida (sem ficar
    "verde parada" no chão); a que sobe vai do cinza ao verde enquanto sobe */
