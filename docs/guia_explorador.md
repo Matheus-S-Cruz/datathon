@@ -1,4 +1,4 @@
-# Guia do CAGED Explorer — Santa Catarina
+# Guia das páginas de exploração — Pulso Industry
 
 Guia de uso para toda a equipe, inclusive quem não usa SQL nem estatística no dia a dia.
 Para instalar e abrir a aplicação, veja o [README](../README.md#como-rodar)
@@ -6,13 +6,14 @@ Para instalar e abrir a aplicação, veja o [README](../README.md#como-rodar)
 
 ## O que é (e o que não é)
 
-O Explorer serve para **entender e conferir os dados** antes da modelagem. Todos os números são
-calculados na hora, a partir dos arquivos em `data/`. Ele **não** traz índice de escassez,
+As páginas de exploração do Pulso Industry servem para **entender e conferir os dados** antes da
+modelagem. Todos os números são calculados na hora, a partir dos arquivos em `data/`. Elas **não** trazem
+índice de escassez,
 ranking definitivo de municípios, previsões nem recomendações automáticas. Essas etapas vêm depois.
 
 > **Onde fica no dashboard:** as páginas deste guia estão nas seções **Exploração e consulta**
 > (Explorador, Municípios, Dicionário, Bases e validação) e **Análises complementares** (Exploração
-> estatística, Relações, Auditoria) do menu. A antiga "Visão geral" do Explorer agora se chama
+> estatística, Relações, Auditoria) do menu. A antiga "Visão geral" do explorador agora se chama
 > **Bases e validação**; a **Visão geral** do menu é o painel executivo (ver `dashboard/README.md`).
 
 Três ideias para ter em mente em todas as páginas:
@@ -86,7 +87,7 @@ validada para daltonismo nos temas claro e escuro.
 
 - Mostra os registros com os **nomes originais das colunas** e os **valores exatamente como estão
   no arquivo** (texto, com vírgula decimal).
-- **linha** = posição do registro no arquivo Parquet. É o identificador usado em todo o Explorer.
+- **linha** = posição do registro no arquivo Parquet. É o identificador usado em todas as páginas de exploração.
 - *Colunas exibidas*, *Ordenar por* (salário, idade e horas são ordenados pelo número, não pelo
   texto), *Decrescente*, *Registros por página* (25 a 500) e *Página*.
 - Só a página visível é enviada ao navegador; a contagem total aparece acima.
@@ -243,5 +244,5 @@ linhas. Os resultados ficam em cache, e as próximas aberturas são quase instan
 número com o valor publicado. Divergências aparecem com o selo laranja *Diverge da auditoria
 inicial*.
 
-**Atualizei um arquivo de dados. O que faço?** Nada: o Explorer percebe a mudança e recalcula. Veja
+**Atualizei um arquivo de dados. O que faço?** Nada: o Pulso Industry percebe a mudança e recalcula. Veja
 *Como adicionar ou atualizar as bases* no README.

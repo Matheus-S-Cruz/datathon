@@ -1,1 +1,1 @@
-"""Código-fonte do projeto Datathon 2026 — Raio-X do Mercado de Trabalho Industrial em SC."""
+"""Código-fonte do Pulso Industry — Datathon CDIA 2026 (desafio "Raio-X do Mercado de Trabalho e Vagas Industriais em SC")."""

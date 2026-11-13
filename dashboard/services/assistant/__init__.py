@@ -1,4 +1,4 @@
-"""Assistente inteligente do Raio-X Industrial — camada conversacional sobre os dados reais.
+"""Assistente inteligente do Pulso Industry (Assistente Pulso) — camada conversacional sobre os dados reais.
 
 PRÉVIA (Etapa 4, modo simulação): toda a arquitetura é funcional — ferramentas controladas que
 reutilizam os serviços oficiais (`queries.py`, `analytics.py`) e o glossário único —, mas o "cérebro"

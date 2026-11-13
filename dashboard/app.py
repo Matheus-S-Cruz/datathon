@@ -1,8 +1,8 @@
-"""Raio-X do Mercado de Trabalho Industrial — Santa Catarina (Datathon CDIA 2026).
+"""Pulso Industry — mercado de trabalho industrial de Santa Catarina (Datathon CDIA 2026).
 
 Três seções:
 1. Visão geral ............ indicadores-chave e os 6 gráficos que respondem à pergunta central;
-2. Exploração e consulta .. CAGED Explorer (filtros, tabelas, dicionário, bases);
+2. Exploração e consulta .. Explorador do Novo CAGED (filtros, tabelas, dicionário, bases);
 3. Análises complementares  demais gráficos do projeto, contexto IBGE e validação estatística.
 
 Execute a partir da raiz do repositório:
@@ -24,7 +24,8 @@ from dashboard.components import ui  # noqa: E402
 from dashboard.services.analytics import missing_outputs  # noqa: E402
 from dashboard.services.database import missing_files  # noqa: E402
 
-st.set_page_config(page_title="Raio-X do Trabalho Industrial — SC", page_icon=":material/factory:",
+ASSETS = Path(__file__).parent / "assets"
+st.set_page_config(page_title="Pulso Industry — Trabalho industrial em SC", page_icon=str(ASSETS / "icon.svg"),
                    layout="wide", initial_sidebar_state="auto")  # auto: aberto no desktop, recolhido no celular
 
 PAGES = Path(__file__).parent / "views"  # não usar "pages/": o Streamlit a listaria sozinho
@@ -58,7 +59,6 @@ navigation = st.navigation({
     ],
 }, expanded=True)
 
-ASSETS = Path(__file__).parent / "assets"
 st.logo(str(ASSETS / f"logo_{ui.theme_type()}.svg"), size="large", icon_image=str(ASSETS / "icon.svg"))
 ui.inject_css()
 
@@ -88,5 +88,6 @@ assistant.render(_pagina_atual)
 
 with st.sidebar:
     st.divider()
-    st.caption("Datathon CDIA 2026 · UniSENAI. Dados: Novo CAGED (MTE) e IBGE. "
+    st.caption("**Pulso Industry** · Decisões inteligentes para uma indústria mais forte.  \n"
+               "Datathon CDIA 2026 · UniSENAI. Dados: Novo CAGED (MTE) e IBGE. "
                "Os filtros desta barra valem para a página aberta.")

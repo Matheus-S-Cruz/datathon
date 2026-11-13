@@ -1,5 +1,11 @@
 # Assistente Inteligente — Etapa 4 (prévia / simulação)
 
+> **Identidade:** o assistente se chama **Assistente Pulso**, da **Pulso Industry**. O avatar circular
+> (`dashboard/assets/assistant_avatar.svg`) é a marca simplificada — coração (propósito), pulso
+> (monitoramento) e barras de dados (indústria e interpretação) — em disco roxo-escuro, legível nos temas
+> claro e escuro. Ele aparece no botão flutuante, no cabeçalho da janela, ao lado de cada resposta e no
+> indicador de processamento.
+
 > **Versão prévia, sem custo.** Toda a arquitetura é funcional — ferramentas controladas que reutilizam
 > os serviços oficiais e o glossário —, mas o "cérebro" de linguagem natural é um **provedor
 > determinístico local** (`SimulatedProvider`), sem chamada a nenhuma API de IA. A arquitetura está

@@ -1,4 +1,4 @@
-"""Glossário único dos indicadores do Raio-X Industrial SC.
+"""Glossário único dos indicadores do Pulso Industry.
 
 Fonte única das DEFINIÇÕES e dos TEXTOS sobre os indicadores. Não contém cálculos nem consultas:
 as fórmulas aqui descrevem o que o pipeline (`notebooks/_build_notebook.py`) e os serviços
@@ -340,7 +340,7 @@ ROTULOS = {"definicao": "Definição", "formula": "Fórmula", "unidade": "Unidad
 
 def markdown() -> str:
     """Versão legível do glossário (é o conteúdo de docs/glossario.md)."""
-    out = ["# Glossário de indicadores — Raio-X Industrial SC", "",
+    out = ["# Glossário de indicadores — Pulso Industry", "",
            "> Arquivo gerado por `python -m src.glossario` a partir de `src/glossario.py`. "
            "Não edite à mão: edite o módulo e gere de novo.", ""]
     grupos: dict[str, list[Indicador]] = {}
