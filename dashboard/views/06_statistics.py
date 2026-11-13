@@ -68,7 +68,7 @@ def record_level() -> None:
     with st.spinner("Calculando sobre todos os registros filtrados…"):
         sx = Q.numeric_summary(x, f)
         sy = Q.numeric_summary(y, f) if y != x else sx
-    st.subheader("Estatísticas descritivas")
+    ui.section("Estatísticas descritivas")
     tables.show(stats_table({variables[x]: sx, variables[y]: sy} if y != x else {variables[x]: sx},
                             {variables[x]: x in MONEY_VARS, variables[y]: y in MONEY_VARS}))
     missing = {variables[v]: int(s["total"] - s["n"]) for v, s in [(x, sx), (y, sy)] if s["total"] > s["n"]}
@@ -80,7 +80,7 @@ def record_level() -> None:
     if x == y:
         st.info("Escolha variáveis X e Y diferentes para ver correlação e dispersão.")
     else:
-        st.subheader("Relação entre X e Y")
+        ui.section("Relação entre X e Y")
         with st.spinner("Calculando correlações…"):
             r = Q.correlation(x, y, f)
         c = st.columns(3)
@@ -112,7 +112,7 @@ def record_level() -> None:
                  f"(de {fmt.integer(r['n'])} pares). Os números acima usam todos os pares.",
                  icon=":material/shuffle:", color="violet")
 
-    st.subheader("Tabela agregada por categoria")
+    ui.section("Tabela agregada por categoria")
     c = st.columns(2)
     var = c[0].selectbox("Variável", list(variables), format_func=variables.get, key="stat_gvar")
     dim = c[1].selectbox("Agrupar por", GROUP_DIMS, format_func=lambda d: Q.DIMENSIONS[d].label, key="stat_gdim")

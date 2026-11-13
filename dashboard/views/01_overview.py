@@ -24,7 +24,7 @@ def main() -> None:
     with st.spinner("Consultando as bases…"):
         k = Q.overview_kpis()
 
-    st.subheader("Movimentações no período")
+    ui.section("Movimentações no período")
     c = st.columns(3)
     c[0].metric("Admissões", fmt.integer(k["admissoes"]), help="Registros com saldomovimentação = +1.")
     c[1].metric("Desligamentos", fmt.integer(k["desligamentos"]), help="Registros com saldomovimentação = −1.")
@@ -39,7 +39,7 @@ def main() -> None:
     ui.explain("O Novo CAGED registra **fluxos** (cada admissão e cada desligamento com carteira assinada). "
                "Ele não mede quantas pessoas estão empregadas (estoque) nem quantas vagas estão abertas.")
 
-    st.subheader("Admissões e desligamentos por mês")
+    ui.section("Admissões e desligamentos por mês")
     col = st.segmented_control("Mês considerado", ["Declaração", "Movimentação"], default="Declaração",
                                key="ov_period") or "Declaração"
     dim = "competencia_mov" if col == "Movimentação" else "competencia_dec"
@@ -56,7 +56,7 @@ def main() -> None:
         st.caption("Meses anteriores a set/2025 aparecem porque há declarações fora do prazo "
                    "referentes a movimentações antigas.")
 
-    st.subheader("Bases de dados")
+    ui.section("Bases de dados")
     c = st.columns(4)
     c[0].metric("Registros do CAGED", fmt.integer(k["registros"]))
     c[1].metric("Colunas do CAGED", k["colunas_arquivo"])
@@ -75,7 +75,7 @@ def main() -> None:
                "indicadores municipais (IBGE, PNUD, DATASUS, Siconfi — ver rodapé do CSV); dicionário oficial "
                "do Novo CAGED.")
 
-    st.subheader("Situação da validação das bases")
+    ui.section("Situação da validação das bases")
     checks = P.validation_checks()
     ok = int(checks["aprovada"].sum())
     if ok == len(checks):
