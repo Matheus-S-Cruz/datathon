@@ -20,6 +20,7 @@ data/processed/
 # Credenciais e segredos (chaves de API de IA etc.)
 .env
 .env.*
+!.env.example
 *.key
 secrets.toml
 .streamlit/secrets.toml

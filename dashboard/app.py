@@ -71,6 +71,21 @@ if missing:
 
 navigation.run()
 
+# Assistente inteligente (Etapa 4, prévia): botão flutuante + janela de conversa, em todas as páginas.
+# Passa o id da página atual (derivado do url_path) para o assistente reconhecer o contexto/recorte.
+from dashboard.components import assistant  # noqa: E402
+
+_URL_TO_PAGE = {
+    "": "00_painel", "explorador": "02_caged_explorer", "municipios": "03_municipalities",
+    "tabelas": "15_tabelas", "dicionario": "04_dictionary", "bases": "01_overview",
+    "catalogo": "16_catalogo", "territorio": "10_territorio", "setores": "11_setores",
+    "renda-escolaridade": "12_renda_escolaridade", "macrofamilias": "13_macrofamilias",
+    "contexto-ibge": "14_contexto_ibge", "estatistica": "06_statistics", "relacoes": "07_relations",
+    "auditoria": "05_audit",
+}
+_pagina_atual = _URL_TO_PAGE.get(getattr(navigation, "url_path", "") or "", "")
+assistant.render(_pagina_atual)
+
 with st.sidebar:
     st.divider()
     st.caption("Datathon CDIA 2026 · UniSENAI. Dados: Novo CAGED (MTE) e IBGE. "
