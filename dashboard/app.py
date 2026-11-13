@@ -25,7 +25,7 @@ from dashboard.services.analytics import missing_outputs  # noqa: E402
 from dashboard.services.database import missing_files  # noqa: E402
 
 st.set_page_config(page_title="Raio-X do Trabalho Industrial — SC", page_icon=":material/factory:",
-                   layout="wide", initial_sidebar_state="expanded")
+                   layout="wide", initial_sidebar_state="auto")  # auto: aberto no desktop, recolhido no celular
 
 PAGES = Path(__file__).parent / "views"  # não usar "pages/": o Streamlit a listaria sozinho
 

@@ -21,7 +21,8 @@ def _options(expr: str, sheet: str | None) -> tuple[list[str], dict[str, str]]:
     df = Q.distinct_values(expr)
     codes = sorted(df["valor"].dropna().astype(str))
     if sheet:
-        labels = {c: f"{c} · {Q.describe(sheet, c)}" for c in codes}
+        describe = Q.describer(sheet)
+        labels = {c: f"{c} · {describe(c)}" for c in codes}
     else:
         labels = {c: c for c in codes}
     return codes, labels

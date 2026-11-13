@@ -61,6 +61,18 @@ class TestLoading(unittest.TestCase):
         self.assertEqual(Q.describe("tipomovimentação", "40"), "Desligamento a pedido")
         self.assertEqual(Q.describe("subclasse", "0111301"), "Cultivo de Arroz")  # zero à esquerda restaurado
 
+    def test_describer_matches_describe(self):
+        """describer() (usado nos filtros com milhares de opções) dá o mesmo texto que describe()."""
+        cases = ["715505", 715505, "0111301", "C", "7", "80", "40", "inexistente", "", None, float("nan")]
+        for sheet in ["cbo2002ocupação", "subclasse", "seção", "graudeinstrução", "tipomovimentação", None]:
+            describe = Q.describer(sheet)
+            for code in cases:
+                self.assertEqual(describe(code), Q.describe(sheet, code), (sheet, code))
+        # todas as opções reais do filtro de CBO
+        codes = Q.distinct_values("cbo")["valor"].dropna().astype(str)
+        describe = Q.describer("cbo2002ocupação")
+        self.assertEqual([describe(c) for c in codes], [Q.describe("cbo2002ocupação", c) for c in codes])
+
 
 class TestFilters(unittest.TestCase):
     def test_movement_filter_matches_kpis(self):

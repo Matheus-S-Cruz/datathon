@@ -170,7 +170,21 @@ def inject_css() -> None:
     """CSS global: cards, KPIs, cabeçalhos e marca. Chamado uma vez em app.py."""
     t = TOKENS[theme_type()]
     st.html(f"""<style>
-    .block-container {{ padding-top: 2.4rem; padding-bottom: 3rem; max-width: 1480px; }}
+    /* A área principal é um "container" de CSS: as quebras abaixo dependem da largura útil
+       (com ou sem menu lateral aberto), não da largura da janela. */
+    .block-container {{ padding-top: 2.4rem; padding-bottom: 3rem; max-width: 1480px;
+                        container-type: inline-size; container-name: rxmain; }}
+    /* Linhas de cards lado a lado empilham quando a área útil fica estreita (tablet, janela
+       menor, menu aberto). Vale só para linhas que contêm cards: filtros e formulários em
+       colunas continuam como estão. */
+    @container rxmain (max-width: 900px) {{
+        [data-testid="stHorizontalBlock"]:has(div[class*="st-key-card_"]) {{ flex-direction: column; }}
+        [data-testid="stHorizontalBlock"]:has(div[class*="st-key-card_"]) > [data-testid="stColumn"] {{
+            width: 100% !important; flex: 1 1 auto !important; min-width: 0; }}
+    }}
+    @container rxmain (max-width: 520px) {{
+        div[class*="st-key-card_"] {{ padding: .85rem .8rem .45rem .8rem; }}
+    }}
     /* cards: ui.card() e st.container(border=True) */
     div[class*="st-key-card_"], div[data-testid="stVerticalBlockBorderWrapper"] {{
         background: {t['surface']}; border: 1px solid {t['border']} !important;
@@ -195,8 +209,10 @@ def inject_css() -> None:
     .rx-question div {{ font-size: 1.02rem; line-height: 1.5; margin-top: .25rem; }}
     /* KPIs */
     .rx-kpis {{ display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; }}
-    @media (max-width: 1100px) {{ .rx-kpis {{ grid-template-columns: repeat(3, minmax(0, 1fr)); }} }}
-    @media (max-width: 700px) {{ .rx-kpis {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }} }}
+    @container rxmain (max-width: 900px) {{ .rx-kpis {{ grid-template-columns: repeat(3, minmax(0, 1fr)); }} }}
+    @container rxmain (max-width: 560px) {{ .rx-kpis {{ grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }}
+                                            .rx-kpis .rx-kpi-value {{ font-size: 1.45rem; }}
+                                            .rx-kpis .rx-kpi:last-child:nth-child(odd) {{ grid-column: 1 / -1; }} }}
     /* logo maior no topo do menu */
     [data-testid="stSidebarHeader"] img, [data-testid="stLogo"] {{ height: 2.6rem !important; max-width: 100%; }}
     .rx-kpi {{ background: {t['surface']}; border: 1px solid {t['border']}; border-radius: 14px;
@@ -210,7 +226,7 @@ def inject_css() -> None:
                     font-size: 18px; line-height: 1; flex: none; }}
     .rx-kpi-label {{ font-size: .8rem; color: {t['ink2']}; font-weight: 550; line-height: 1.25; }}
     .rx-kpi-value {{ font-size: 1.75rem; font-weight: 700; color: {t['ink']}; margin-top: .5rem;
-                     line-height: 1.1; letter-spacing: -.01em; }}
+                     line-height: 1.1; letter-spacing: -.01em; white-space: nowrap; }}
     .rx-kpi-note {{ font-size: .76rem; color: {t['muted']}; margin-top: .35rem; line-height: 1.4; }}
     /* título de seção dentro da página */
     .rx-section {{ display: flex; align-items: baseline; gap: .7rem; flex-wrap: wrap;

@@ -40,7 +40,8 @@ def search_panel() -> dict:
                 if n_distinct <= MAX_VALUE_OPTIONS:
                     opts = Q.distinct_values(q(vcol))
                     sheet = BY_NAME[vcol].sheet
-                    label = {v: f"{v}" + (f" · {Q.describe(sheet, v)}" if sheet else "") + f"  ({fmt.integer(n)})"
+                    describe = Q.describer(sheet)
+                    label = {v: f"{v}" + (f" · {describe(v)}" if sheet else "") + f"  ({fmt.integer(n)})"
                              for v, n in zip(opts["valor"], opts["n"])}
                     values = c[1].multiselect(f"Valores de `{vcol}`", list(opts["valor"]),
                                               format_func=lambda v: label.get(v, v), key=f"exp_vals_{vcol}")

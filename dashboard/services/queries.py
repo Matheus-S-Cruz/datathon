@@ -182,6 +182,23 @@ def describe(sheet: str | None, code) -> str:
     return labels_for(sheet).get(str(code), NO_DESCRIPTION)
 
 
+def describer(sheet: str | None):
+    """Mesmo resultado de `describe(sheet, code)`, para descrever muitos códigos de uma vez.
+
+    `describe` busca a tabela de rótulos a cada chamada (consulta ao cache do Streamlit +
+    verificação dos arquivos). Em listas com milhares de opções (CBO, subclasse) isso custava
+    ~9 s por interação; aqui a tabela é buscada uma vez e cada código vira uma consulta ao dict.
+    """
+    table = labels_for(sheet) if sheet is not None else {}
+
+    def _describe(code) -> str:
+        if sheet is None or code is None or (isinstance(code, float) and pd.isna(code)):
+            return ""
+        return table.get(str(code), NO_DESCRIPTION)
+
+    return _describe
+
+
 competencia_label = fmt.competencia   # '202509' -> 'set/2025'
 
 
@@ -236,7 +253,7 @@ def add_labels(df: pd.DataFrame, dim_key: str, column: str | None = None) -> pd.
     elif dim_key.startswith("competencia"):
         df[f"{column}_descricao"] = df[column].map(competencia_label)
     elif dim.sheet:
-        df[f"{column}_descricao"] = df[column].map(lambda c: describe(dim.sheet, c))
+        df[f"{column}_descricao"] = df[column].map(describer(dim.sheet))
     return df
 
 
