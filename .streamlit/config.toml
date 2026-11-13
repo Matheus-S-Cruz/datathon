@@ -1,4 +1,4 @@
-# Configuração do dashboard Raio-X do Trabalho Industrial — SC (Streamlit).
+# Configuração do dashboard Pulso Industry (Streamlit).
 [browser]
 # Não envia estatísticas de uso: a aplicação funciona sem internet.
 gatherUsageStats = false

@@ -1,4 +1,7 @@
-# Dashboard — Raio-X do Trabalho Industrial (Entregável 2)
+# Dashboard — Pulso Industry (Entregável 2)
+
+Identidade visual em `assets/`: logo (`logo_light.svg` / `logo_dark.svg`, conforme o tema), símbolo
+(`icon.svg`, também usado como ícone da aba) e avatar circular do Assistente Pulso (`assistant_avatar.svg`).
 
 Painel em **Streamlit** que responde à pergunta central do desafio. Execute a partir da raiz:
 
@@ -53,9 +56,9 @@ que só consulta ao clicar em *Aplicar filtros*.
 ```text
 app.py                 # menu (st.navigation) com as 3 seções, logotipo e CSS
 views/00_painel.py     # Visão geral
-views/01–07_*.py       # CAGED Explorer (exploração/validação)
+views/01–07_*.py       # Explorador do Novo CAGED e páginas de exploração/validação
 views/10–15_*.py       # análises complementares e tabelas analíticas
 components/            # ui (cards, KPIs), charts, filters, tables
 services/analytics.py  # tabelas do pipeline + IBGE e recortes
-services/queries.py    # consultas DuckDB do Explorer
+services/queries.py    # consultas DuckDB das páginas de exploração
 ```

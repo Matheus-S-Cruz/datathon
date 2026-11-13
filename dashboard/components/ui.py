@@ -148,12 +148,12 @@ TOKENS = {
                   shadow="0 1px 2px rgba(16,24,40,.04), 0 4px 14px rgba(16,24,40,.05)",
                   chip_blue="#e8f1fc", chip_orange="#fdeee7", chip_green="#e5f6ef", chip_violet="#eeecfb",
                   chip_amber="#fdf3dc", blue="#2a78d6", orange="#c24d1c", green="#0f7a55", violet="#5143b8",
-                  amber="#8a5d00", hero_a="#1c4f94", hero_b="#2a78d6"),
+                  amber="#8a5d00", hero_a="#5b21b6", hero_b="#a21caf"),   # marca Pulso: roxo → magenta
     "dark": dict(surface="#191d23", border="#2a3039", ink="#e6e9ef", ink2="#b4bccb", muted="#8c95a5",
                  shadow="0 1px 2px rgba(0,0,0,.35), 0 6px 16px rgba(0,0,0,.25)",
                  chip_blue="#16304f", chip_orange="#3d2216", chip_green="#123a2c", chip_violet="#28244a",
                  chip_amber="#3a2e10", blue="#6da7ec", orange="#f2a07c", green="#5fd3a5", violet="#aaa1f5",
-                 amber="#f1c35e", hero_a="#15365f", hero_b="#1f5fb0"),
+                 amber="#f1c35e", hero_a="#3b1673", hero_b="#701a75"),
 }
 ACCENTS = ("blue", "orange", "green", "violet", "amber")
 ICON_FONT = "'Material Symbols Rounded'"
@@ -172,7 +172,8 @@ def inject_css() -> None:
     st.html(f"""<style>
     /* A área principal é um "container" de CSS: as quebras abaixo dependem da largura útil
        (com ou sem menu lateral aberto), não da largura da janela. */
-    .block-container {{ padding-top: 2.4rem; padding-bottom: 3rem; max-width: 1480px;
+    /* padding-top acima da barra superior do Streamlit (60 px), para o rótulo da seção não ficar escondido */
+    .block-container {{ padding-top: 4rem; padding-bottom: 3rem; max-width: 1480px;
                         container-type: inline-size; container-name: rxmain; }}
     /* Linhas de cards lado a lado empilham quando a área útil fica estreita (tablet, janela
        menor, menu aberto). Vale só para linhas que contêm cards: filtros e formulários em

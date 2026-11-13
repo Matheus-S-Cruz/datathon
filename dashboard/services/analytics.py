@@ -1,6 +1,6 @@
 """Tabelas analíticas do painel: saídas do pipeline (`outputs/`) + bases do IBGE (`data/external/`).
 
-As páginas do CAGED Explorer consultam o Parquet bruto pelo DuckDB (services/queries.py).
+As páginas de exploração (Explorador do Novo CAGED e afins) consultam o Parquet bruto pelo DuckDB (services/queries.py).
 As páginas analíticas (Visão geral e Análises complementares) usam as agregações já
 calculadas pelo pipeline `notebooks/01_pipeline_caged_sc.ipynb`, que são pequenas e
 carregam instantaneamente. Os cálculos de filtro abaixo são os mesmos do dashboard

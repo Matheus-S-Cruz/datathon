@@ -1,1 +1,1 @@
-"""CAGED Explorer — Santa Catarina: aplicação Streamlit de exploração e auditoria das bases."""
+"""Pulso Industry: aplicação Streamlit de análise, exploração e auditoria do mercado de trabalho industrial de SC."""

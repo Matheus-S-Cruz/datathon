@@ -1,4 +1,8 @@
-# Raio-X do Mercado de Trabalho Industrial em Santa Catarina
+# Pulso Industry
+
+**Decisões inteligentes para uma indústria mais forte.** Painel de inteligência sobre o mercado de
+trabalho industrial de Santa Catarina — solução da equipe para o desafio *Raio-X do Mercado de
+Trabalho e Vagas Industriais em Santa Catarina*.
 
 Projeto da equipe para o **Datathon CDIA 2026 — UniSENAI** (Bacharelado em Ciência de Dados e IA).
 Atuando como uma consultoria de dados, transformamos os microdados do **Novo CAGED** em um painel de

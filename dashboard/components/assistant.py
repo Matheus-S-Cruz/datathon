@@ -9,6 +9,10 @@ PRÉVIA: o "cérebro" é o provedor simulado determinístico; a janela exibe um 
 
 from __future__ import annotations
 
+import base64
+from functools import lru_cache
+from pathlib import Path
+
 import streamlit as st
 
 from dashboard.components import ui
@@ -18,7 +22,20 @@ from dashboard.services.assistant.response import Kind
 _HIST = "assist_historico"      # lista de (papel, Resposta|str)
 _PENDENTE = "assist_pendente"   # pergunta a processar no próximo rerun
 _MAX_MSGS = 40                  # limite de mensagens mantidas na sessão (§11.2)
-_NOME = "Assistente do Raio-X Industrial"
+_NOME = "Assistente Pulso"
+_MARCA = "Pulso Industry"
+# Avatar circular do assistente: a marca Pulso Industry (coração + pulso + barras de dados) em disco escuro.
+AVATAR = Path(__file__).resolve().parents[1] / "assets" / "assistant_avatar.svg"
+
+
+@lru_cache(maxsize=1)
+def _avatar_uri() -> str:
+    """Avatar como data URI (base64): usado no cabeçalho, no botão flutuante e no indicador de carregamento."""
+    return "data:image/svg+xml;base64," + base64.b64encode(AVATAR.read_bytes()).decode("ascii")
+
+
+def _avatar_img(size: int, cls: str = "rx-assist-avatar") -> str:
+    return f'<img class="{cls}" src="{_avatar_uri()}" width="{size}" height="{size}" alt="{_NOME}">'
 
 
 def _css() -> None:
@@ -26,11 +43,26 @@ def _css() -> None:
     st.html(f"""<style>
     /* contêiner fixo do botão flutuante (canto inferior direito), acima do conteúdo */
     div.st-key-rx_assist_fab {{ position: fixed; right: 1.1rem; bottom: 1.1rem; z-index: 1000; width: auto; }}
-    /* o botão que abre o popover vira um círculo com a identidade do projeto */
+    /* o botão que abre o popover vira uma pílula com a identidade Pulso Industry e o avatar à esquerda */
     div.st-key-rx_assist_fab [data-testid="stPopover"] > div > button {{
-        border-radius: 999px; padding: .6rem 1rem; font-weight: 650; box-shadow: {t['shadow']};
+        border-radius: 999px; padding: .45rem 1rem .45rem .45rem; font-weight: 650; box-shadow: {t['shadow']};
         background: linear-gradient(120deg, {t['hero_a']}, {t['hero_b']}); color: #fff; border: none; }}
+    div.st-key-rx_assist_fab [data-testid="stPopover"] > div > button::before {{
+        content: ""; flex: none; width: 28px; height: 28px; margin-right: .5rem; border-radius: 50%;
+        background: url("{_avatar_uri()}") center / contain no-repeat;
+        box-shadow: 0 0 0 2px rgba(255,255,255,.35); }}
     div.st-key-rx_assist_fab [data-testid="stPopover"] > div > button:hover {{ filter: brightness(1.05); }}
+    /* avatar: sempre círculo perfeito, sem esticar */
+    .rx-assist-avatar {{ width: 34px; height: 34px; border-radius: 50%; object-fit: contain; flex: none; }}
+    .rx-assist-id {{ display: flex; align-items: center; gap: .6rem; }}
+    [data-testid="stChatMessageAvatarCustom"] img, [data-testid="stChatMessage"] img[alt="assistant avatar"] {{
+        border-radius: 50%; object-fit: contain; }}
+    /* estado de processamento: o avatar "pulsa" de leve enquanto a resposta é calculada */
+    .rx-assist-thinking {{ display: flex; align-items: center; gap: .55rem; font-size: .85rem; color: {t['muted']};
+        padding: .35rem 0; }}
+    .rx-assist-thinking img {{ width: 28px; height: 28px; border-radius: 50%; animation: rxpulse 1.2s ease-in-out infinite; }}
+    @keyframes rxpulse {{ 0%, 100% {{ transform: scale(1); opacity: 1; }} 50% {{ transform: scale(1.08); opacity: .75; }} }}
+    @media (prefers-reduced-motion: reduce) {{ .rx-assist-thinking img {{ animation: none; }} }}
     /* painel do popover: largura confortável no desktop, adapta no celular */
     div[data-testid="stPopoverBody"] {{ width: min(92vw, 420px); max-height: 70vh; }}
     .rx-assist-head {{ font-weight: 700; color: {t['ink']}; font-size: 1rem; line-height: 1.2; }}
@@ -62,8 +94,14 @@ def _processa_pendente(orch: Orchestrator, pagina_id: str) -> None:
         return
     hist = st.session_state.setdefault(_HIST, [])
     hist.append(("user", pergunta))
-    with st.spinner("Consultando os dados do dashboard…"):
+    # Indicador de carregamento com a identidade do assistente (substitui o spinner genérico).
+    aguarde = st.empty()
+    aguarde.html(f'<div class="rx-assist-thinking">{_avatar_img(28, "")}'
+                 '<span>Consultando os dados do dashboard…</span></div>')
+    try:
         resposta = orch.responde(pergunta, pagina_id=pagina_id, state=st.session_state)
+    finally:
+        aguarde.empty()
     hist.append(("assistant", resposta))
     del hist[: max(0, len(hist) - _MAX_MSGS)]   # mantém só as últimas mensagens
 
@@ -81,12 +119,14 @@ def render(pagina_id: str = "") -> None:
     hist = st.session_state.setdefault(_HIST, [])
 
     fab = st.container(key="rx_assist_fab")
-    with fab.popover(":material/smart_toy: Assistente", use_container_width=False):
+    with fab.popover("Assistente Pulso", use_container_width=False):
         c1, c2 = st.columns([0.74, 0.26])
         with c1:
-            st.html(f'<div class="rx-assist-head">{_NOME}'
+            st.html(f'<div class="rx-assist-id">{_avatar_img(34)}<div>'
+                    f'<div class="rx-assist-head">{_NOME}'
                     f'<span class="rx-assist-badge">Prévia (simulação)</span></div>'
-                    '<div class="rx-assist-sub">Responde com base nos dados e na metodologia do dashboard.</div>')
+                    f'<div class="rx-assist-sub">{_MARCA} · responde com base nos dados e na metodologia '
+                    'do dashboard.</div></div></div>')
         with c2:
             if st.button("Limpar", key="rx_assist_clear", use_container_width=True,
                          help="Apagar a conversa desta sessão"):
@@ -103,7 +143,7 @@ def render(pagina_id: str = "") -> None:
                     with st.chat_message("user"):
                         st.markdown(msg)
                 else:
-                    with st.chat_message("assistant"):
+                    with st.chat_message("assistant", avatar=str(AVATAR)):
                         _render_resposta(msg)
 
         st.chat_input("Escreva sua pergunta…", key="rx_assist_input", on_submit=_enviar_do_input)

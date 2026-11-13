@@ -1,4 +1,4 @@
-"""Renderiza cada página do CAGED Explorer sem navegador (streamlit.testing.AppTest)
+"""Renderiza cada página do Pulso Industry sem navegador (streamlit.testing.AppTest)
 e falha se alguma página mostrar erro ou levantar exceção.
 
     python -m unittest tests.test_app_pages -v
@@ -51,7 +51,7 @@ class TestPagesRender(unittest.TestCase):
         at = AppTest.from_file(str(APP), default_timeout=600)
         at.run()
         self.assertEqual(problems(at), [])
-        self.assertEqual(at.title[0].value, "Raio-X do Mercado de Trabalho Industrial")
+        self.assertEqual(at.title[0].value, "Mercado de Trabalho Industrial de Santa Catarina")
         html = " ".join(str(h.proto.body) for h in at.get("html"))
         self.assertIn("+41.482", html)          # mesmo saldo da auditoria
         self.assertIn("1.719.449 admissões", html)

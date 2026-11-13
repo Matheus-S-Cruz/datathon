@@ -19,8 +19,8 @@ from dashboard.services.assistant.tools import metadata as meta
 from src import glossario as G
 
 RECUSA_INJECAO = (
-    "Só posso responder sobre os dados, indicadores e a metodologia do Raio-X Industrial de Santa "
-    "Catarina. Não executo comandos, não acesso arquivos e não compartilho configurações internas.")
+    "Só posso responder sobre os dados, indicadores e a metodologia do Pulso Industry (mercado de "
+    "trabalho industrial de Santa Catarina). Não executo comandos, não acesso arquivos e não compartilho configurações internas.")
 
 SUGESTOES_INICIAIS = (
     "Quais são os principais indicadores do painel?",
@@ -93,7 +93,7 @@ class Orchestrator:
         return self._nao_sei()
 
     def _ajuda(self) -> Resposta:
-        texto = ("Sou o assistente do Raio-X Industrial de Santa Catarina. Respondo com base nos dados e "
+        texto = ("Sou o Assistente Pulso, da Pulso Industry. Respondo com base nos dados e "
                  "na metodologia do próprio dashboard. Posso **explicar indicadores** (saldo, rotatividade, "
                  "salário, escolaridade), mostrar **KPIs do recorte atual**, **rankings de municípios**, o "
                  "**saldo por setor** e esclarecer **limitações e diferenças metodológicas**. Não estimo "

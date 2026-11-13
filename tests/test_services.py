@@ -1,4 +1,4 @@
-"""Testes da camada de dados do CAGED Explorer, contra os arquivos reais.
+"""Testes da camada de dados do Pulso Industry, contra os arquivos reais.
 
     python -m unittest tests.test_services -v
 

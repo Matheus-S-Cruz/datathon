@@ -281,9 +281,9 @@ def closing() -> None:
 
 
 def main() -> None:
-    ui.header("Raio-X do Mercado de Trabalho Industrial",
+    ui.header("Mercado de Trabalho Industrial de Santa Catarina",
               "Santa Catarina · Novo CAGED de set/2025 a ago/2026 (3,4 milhões de movimentações) cruzado com "
-              "dados municipais e bases públicas do IBGE.", eyebrow="Visão geral")
+              "dados municipais e bases públicas do IBGE.", eyebrow="Pulso Industry · Visão geral")
     ui.question_banner()
     scope = filters.analysis_scope()
     ui.scope_bar(scope.describe())

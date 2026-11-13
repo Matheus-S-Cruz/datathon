@@ -1,4 +1,4 @@
-# Glossário de indicadores — Raio-X Industrial SC
+# Glossário de indicadores — Pulso Industry
 
 > Arquivo gerado por `python -m src.glossario` a partir de `src/glossario.py`. Não edite à mão: edite o módulo e gere de novo.
 
