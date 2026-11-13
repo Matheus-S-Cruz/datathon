@@ -403,7 +403,21 @@ sal_grau = (dfm.groupby("grau_cod")
                    **SAL_AGG)
               .reset_index().sort_values("grau_ord", na_position="last"))
 print("\\nSalário por grau de instrução (mediana sem zeros × média):")
-print(sal_grau[["grau","salario_mediano_s0","salario_medio","n","n_salario_s0"]].to_string(index=False))""")
+print(sal_grau[["grau","salario_mediano_s0","salario_medio","n","n_salario_s0"]].to_string(index=False))
+
+# Resumo salarial do ESTADO inteiro (uma linha). O painel usa a mediana sem zeros como
+# manchete; a mediana geral não pode ser obtida ponderando medianas de grupos, por isso é
+# calculada aqui sobre todos os registros. Ver docs/metodologia_salarial.md.
+sal_resumo = pd.DataFrame([{
+    "salario_mediano_s0": _median_pos(dfm["salario"]),
+    "salario_medio_s0":   _mean_pos(dfm["salario"]),
+    "salario_medio":      dfm["salario"].mean(),
+    "salario_mediano":    dfm["salario"].median(),
+    "n_salario":          int(dfm["salario"].count()),
+    "n_salario_s0":       int((dfm["salario"] > 0).sum()),
+}])
+print("\\nResumo salarial do estado (R$/mês):")
+print(sal_resumo.to_string(index=False))""")
 
 # ------------------------------------------------------------------ 8. IA / CBO
 md("""## 8. Enriquecimento com IA — agrupamento de CBOs em macrofamílias
@@ -508,6 +522,7 @@ code("""saidas = {
     "agg_municipio_setor.parquet":  terr_setor,
     "perfil_adm_desl.parquet":      perfil,
     "salario_por_grau.parquet":     sal_grau,
+    "salario_resumo.parquet":       sal_resumo,
     "macrofamilias_cbo.parquet":    macro,
     "macrofamilias_industria.parquet": macro_ind,
     "agg_regiao.parquet":           regioes,

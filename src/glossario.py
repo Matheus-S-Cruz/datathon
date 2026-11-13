@@ -219,9 +219,24 @@ INDICADORES: tuple[Indicador, ...] = (
         colunas=("pct_superior",), onde="Painel executivo, Macrofamílias, Tabelas analíticas",
         textos={"tabelas_ajuda": "Fração das movimentações com superior completo, pós, mestrado ou doutorado."}),
     Indicador(
+        id="salario_mediano", nome="Salário mediano nas movimentações", grupo="Escolaridade e renda",
+        definicao="Mediana do salário mensal declarado nas admissões e desligamentos, excluindo os valores "
+                  "zerados. É a medida principal de salário do projeto (metodologia da etapa 3.2).",
+        formula="mediana de `salário` entre os registros do grupo com `salário` > 0 (`salario_mediano_s0`)",
+        unidade="R$ por mês", fonte=f"{FONTE_CAGED}; {FONTE_DICIONARIO} (`salário` = salário mensal declarado)",
+        periodo=PERIODO, abrangencia=ABRANGENCIA_RECORTE,
+        filtragem="Exclui os 33.912 registros com salário igual a zero (ex.: unidade de pagamento 'Variável'); "
+                  "o `salário` já é mensalizado na origem (MTE), então todas as periodicidades entram",
+        limitacoes="Descreve o fluxo de contratações, não o estoque de empregos. Não é possível distinguir "
+                   "valores extremos reais de erros de digitação. Ver docs/metodologia_salarial.md",
+        colunas=("salario_mediano_s0",), onde="Painel executivo, análises complementares",
+        textos={"kpi_ajuda": "Mediana do salário declarado em admissões e desligamentos (exclui zeros). "
+                             "Estável a valores extremos. A manchete é a mediana de Santa Catarina inteira.",
+                "kpi_nota": "mediana, R$/mês, exclui zeros"}),
+    Indicador(
         id="salario_medio", nome="Salário médio nas movimentações", grupo="Escolaridade e renda",
-        definicao="Média do salário mensal declarado nas admissões e desligamentos (definição atual, em "
-                  "revisão na etapa 3.2 do projeto).",
+        definicao="Média do salário mensal declarado nas admissões e desligamentos. Medida complementar: "
+                  "a mediana (`salario_mediano`) é a medida principal do projeto.",
         formula="média aritmética de `salário` de todos os registros do grupo; em recortes, média dos grupos "
                 "ponderada pelo nº de movimentações",
         unidade="R$ por mês", fonte=f"{FONTE_CAGED}; {FONTE_DICIONARIO} (`salário` = salário mensal declarado)",
@@ -229,10 +244,10 @@ INDICADORES: tuple[Indicador, ...] = (
         filtragem="Nenhuma exclusão: inclui salários zerados e todas as periodicidades de pagamento",
         limitacoes="Inclui 33.912 salários iguais a zero; registros cujo valor não é mensal (parte fixa paga "
                    "por semana ou por tarefa); e periodicidades quase sempre sem valor (variável, não "
-                   "identificado). 535 valores acima de R$ 50 mil puxam a média",
+                   "identificado). 535 valores acima de R$ 50 mil puxam a média para cima",
         colunas=("salario_medio",), onde="Painel executivo, análises complementares, Tabelas analíticas",
         textos={"kpi_ajuda": "Média do salário declarado em admissões e desligamentos, ponderada pelo nº de "
-                             "movimentações."}),
+                             "movimentações. Complemento da mediana; sensível a valores extremos."}),
     # ------------------------------------------------------------ classificação
     Indicador(
         id="macrofamilia", nome="Macrofamília de ocupações", grupo="Classificação",
@@ -275,19 +290,22 @@ NOTAS: dict[str, Nota] = {
         "formam a macrofamília operacional.",
         ("macrofamilia",)),
     "macro_salario": Nota(
-        "Salário médio inclui todos os salários declarados (ver limites no fim da página).", ("salario_medio",)),
+        "Medida principal: mediana sem zeros (estável a valores extremos). A média, quando exibida, "
+        "é complemento e inclui todos os salários declarados (ver limites no fim da página).",
+        ("salario_mediano", "salario_medio")),
     "salario_relacao": Nota(
-        "Relação descritiva: mostra quanto cada grupo recebe em média, não que a escolaridade cause "
-        "a diferença. Limite: a média inclui salários zerados e não mensais.",
-        ("salario_medio",)),
+        "Relação descritiva: mostra quanto cada grupo recebe (mediana sem zeros), não que a escolaridade "
+        "cause a diferença. O `salário` do Novo CAGED já é mensalizado na origem (MTE).",
+        ("salario_mediano",)),
     "dispersao_relacao": Nota(
-        "Relação descritiva entre três medidas do mesmo município; não indica causa.",
+        "Relação descritiva entre três medidas do mesmo município; não indica causa. O salário por "
+        "município é a média (complemento), pois a mediana não é obtida de dados pré-agregados.",
         ("salario_medio", "pct_superior", "saldo_por_10k_censo")),
     "renda_ressalva": Nota(
-        "Ressalva metodológica: as médias incluem salários informados como zero e valores "
-        "de periodicidade não mensal (sobretudo por hora; também por dia, semana, tarefa "
-        "ou variável).",
-        ("salario_medio",)),
+        "Ressalva metodológica: a medida principal é a mediana sem zeros. A média, quando exibida, inclui "
+        "salários informados como zero e valores de periodicidade não mensal (sobretudo por hora; também "
+        "por dia, semana, tarefa ou variável).",
+        ("salario_mediano", "salario_medio")),
 }
 
 _BY_ID = {i.id: i for i in INDICADORES}

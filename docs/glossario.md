@@ -179,18 +179,31 @@
 - **Regras de filtragem:** O código 99 (não identificado) fica fora do numerador e do denominador
 - **Limitações:** Descreve quem foi admitido ou desligado, não a escolaridade de toda a força de trabalho
 
+### Salário mediano nas movimentações
+
+- **Coluna nos dados:** `salario_mediano_s0`
+- **Onde aparece:** Painel executivo, análises complementares
+- **Definição:** Mediana do salário mensal declarado nas admissões e desligamentos, excluindo os valores zerados. É a medida principal de salário do projeto (metodologia da etapa 3.2).
+- **Fórmula:** mediana de `salário` entre os registros do grupo com `salário` > 0 (`salario_mediano_s0`)
+- **Unidade:** R$ por mês
+- **Fonte:** Novo CAGED/MTE — microdados de movimentações de SC fornecidos pela organização do Datathon; Dicionário de dados oficial do Novo CAGED (`Dicionario_de_dados.xlsx`) (`salário` = salário mensal declarado)
+- **Período:** set/2025 a ago/2026 (competência de declaração do Novo CAGED)
+- **Abrangência:** Movimentações em municípios de SC; segue o recorte de setores, região e população mínima quando aplicado
+- **Regras de filtragem:** Exclui os 33.912 registros com salário igual a zero (ex.: unidade de pagamento 'Variável'); o `salário` já é mensalizado na origem (MTE), então todas as periodicidades entram
+- **Limitações:** Descreve o fluxo de contratações, não o estoque de empregos. Não é possível distinguir valores extremos reais de erros de digitação. Ver docs/metodologia_salarial.md
+
 ### Salário médio nas movimentações
 
 - **Coluna nos dados:** `salario_medio`
 - **Onde aparece:** Painel executivo, análises complementares, Tabelas analíticas
-- **Definição:** Média do salário mensal declarado nas admissões e desligamentos (definição atual, em revisão na etapa 3.2 do projeto).
+- **Definição:** Média do salário mensal declarado nas admissões e desligamentos. Medida complementar: a mediana (`salario_mediano`) é a medida principal do projeto.
 - **Fórmula:** média aritmética de `salário` de todos os registros do grupo; em recortes, média dos grupos ponderada pelo nº de movimentações
 - **Unidade:** R$ por mês
 - **Fonte:** Novo CAGED/MTE — microdados de movimentações de SC fornecidos pela organização do Datathon; Dicionário de dados oficial do Novo CAGED (`Dicionario_de_dados.xlsx`) (`salário` = salário mensal declarado)
 - **Período:** set/2025 a ago/2026 (competência de declaração do Novo CAGED)
 - **Abrangência:** Movimentações em municípios de SC; segue o recorte de setores, região e população mínima quando aplicado
 - **Regras de filtragem:** Nenhuma exclusão: inclui salários zerados e todas as periodicidades de pagamento
-- **Limitações:** Inclui 33.912 salários iguais a zero; registros cujo valor não é mensal (parte fixa paga por semana ou por tarefa); e periodicidades quase sempre sem valor (variável, não identificado). 535 valores acima de R$ 50 mil puxam a média
+- **Limitações:** Inclui 33.912 salários iguais a zero; registros cujo valor não é mensal (parte fixa paga por semana ou por tarefa); e periodicidades quase sempre sem valor (variável, não identificado). 535 valores acima de R$ 50 mil puxam a média para cima
 
 ## Classificação
 
@@ -227,7 +240,7 @@
 - **regioes_formulas** (Crescimento do emprego formal, Taxa de rotatividade): Crescimento = saldo ÷ assalariados do CEMPRE 2024 × 100. Rotatividade = mín(admissões, desligamentos) ÷ assalariados × 100 (conceito DIEESE): a parte do fluxo que é troca de trabalhadores, não vaga nova.
 - **regioes_leitura** (Crescimento do emprego formal, Taxa de rotatividade): Leitura: regiões no alto e à esquerda trocam muitos trabalhadores sem crescer — sinal de dificuldade de reter mão de obra. Limite: o CEMPRE 2024 é uma aproximação do estoque.
 - **macro_agrupamento** (Macrofamília de ocupações): Agrupamento determinístico pelo 1º dígito do código CBO-2002 (Grande Grupo); os grupos 7 e 8 formam a macrofamília operacional.
-- **macro_salario** (Salário médio nas movimentações): Salário médio inclui todos os salários declarados (ver limites no fim da página).
-- **salario_relacao** (Salário médio nas movimentações): Relação descritiva: mostra quanto cada grupo recebe em média, não que a escolaridade cause a diferença. Limite: a média inclui salários zerados e não mensais.
-- **dispersao_relacao** (Salário médio nas movimentações, Com superior completo ou mais, Saldo por 10 mil habitantes (população do Censo 2022)): Relação descritiva entre três medidas do mesmo município; não indica causa.
-- **renda_ressalva** (Salário médio nas movimentações): Ressalva metodológica: as médias incluem salários informados como zero e valores de periodicidade não mensal (sobretudo por hora; também por dia, semana, tarefa ou variável).
+- **macro_salario** (Salário mediano nas movimentações, Salário médio nas movimentações): Medida principal: mediana sem zeros (estável a valores extremos). A média, quando exibida, é complemento e inclui todos os salários declarados (ver limites no fim da página).
+- **salario_relacao** (Salário mediano nas movimentações): Relação descritiva: mostra quanto cada grupo recebe (mediana sem zeros), não que a escolaridade cause a diferença. O `salário` do Novo CAGED já é mensalizado na origem (MTE).
+- **dispersao_relacao** (Salário médio nas movimentações, Com superior completo ou mais, Saldo por 10 mil habitantes (população do Censo 2022)): Relação descritiva entre três medidas do mesmo município; não indica causa. O salário por município é a média (complemento), pois a mediana não é obtida de dados pré-agregados.
+- **renda_ressalva** (Salário mediano nas movimentações, Salário médio nas movimentações): Ressalva metodológica: a medida principal é a mediana sem zeros. A média, quando exibida, inclui salários informados como zero e valores de periodicidade não mensal (sobretudo por hora; também por dia, semana, tarefa ou variável).

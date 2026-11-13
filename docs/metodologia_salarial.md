@@ -200,8 +200,10 @@ como medida principal do indicador salarial nas páginas analíticas, mantendo a
 Explorador e a auditoria já fazem, e ao que o catálogo/glossário já recomendam
 ("Usar mediana; tratar zeros e extremos").
 
-> Esta recomendação **não foi implementada**. É a proposta que a Etapa 3.2b/3.2c
-> deverá submeter à aprovação antes de qualquer mudança no pipeline ou no painel.
+> **Atualização:** a recomendação foi **aprovada e implementada** nas etapas 3.2b (pipeline)
+> e 3.2c (painel). A mediana sem zeros (`salario_mediano_s0`) é agora a medida principal nos
+> gráficos por escolaridade e macrofamília e no KPI de salário; a média permanece como
+> complemento rotulado. Nenhuma coluna de origem foi sobrescrita (ver §11).
 
 ### Sobre o mínimo de 30 observações por grupo
 
@@ -271,5 +273,10 @@ surgir.
 | n por grupo | Sem sinalização | **Sinalizar** grupos com n < 30 em recortes finos |
 | Dados de origem | `salário`, `valorsaláriofixo`, `unidadesaláriocódigo` | **Preservados; nenhuma coluna de origem é sobrescrita** |
 
-> **Nenhuma destas propostas foi implementada.** Elas são o fundamento para as
-> Etapas 3.2b (pipeline) e 3.2c (painel), que só avançam após aprovação.
+> **Status:** estas propostas foram **aprovadas e implementadas** nas etapas 3.2b (pipeline,
+> colunas aditivas `salario_mediano_s0`, `salario_medio_s0`, `n_salario`, `n_salario_s0` e a
+> tabela `salario_resumo`) e 3.2c (painel, mediana como manchete do salário e medida principal
+> dos gráficos por escolaridade e macrofamília; média como complemento rotulado). As dispersões
+> municipais mantêm a média, rotulada como tal, porque a mediana não é derivável de dados
+> pré-agregados sem reabrir os microdados (decisão da Opção A, para preservar o desempenho das
+> páginas analíticas validado na Fase A). Dados de origem preservados.

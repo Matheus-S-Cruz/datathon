@@ -20,7 +20,8 @@ from src.config import COORDS_PARQUET, EXTERNAL_DIR, OUTPUTS_DIR
 
 INDUSTRIAL_SECTIONS = ("B", "C", "D", "F")  # Extrativas, Transformação, Eletricidade/Gás, Construção
 OUTPUT_TABLES = ("agg_municipio", "agg_setor", "agg_municipio_setor", "perfil_adm_desl",
-                 "salario_por_grau", "macrofamilias_cbo", "macrofamilias_industria", "agg_regiao")
+                 "salario_por_grau", "macrofamilias_cbo", "macrofamilias_industria", "agg_regiao",
+                 "salario_resumo")
 REGION_LEVELS = {"regiao_intermediaria": "Região geográfica intermediária",
                  "regiao_imediata": "Região geográfica imediata"}
 
@@ -219,3 +220,13 @@ def region_names() -> list[str]:
 
 def macro(industrial_only: bool) -> pd.DataFrame:
     return table("macrofamilias_industria" if industrial_only else "macrofamilias_cbo").sort_values("saldo")
+
+
+def salario_estado() -> dict:
+    """Resumo salarial de Santa Catarina inteira (uma linha do pipeline).
+
+    A mediana sem zeros (`salario_mediano_s0`) é a medida principal; não pode ser obtida ponderando
+    medianas de grupos, por isso vem calculada sobre todos os microdados no pipeline. Usada como
+    manchete do KPI de salário (não acompanha o recorte da barra lateral)."""
+    r = table("salario_resumo").iloc[0]
+    return {k: float(r[k]) if "n_salario" not in k else int(r[k]) for k in r.index}

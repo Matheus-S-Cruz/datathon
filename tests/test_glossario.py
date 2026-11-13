@@ -23,7 +23,9 @@ KPI_AJUDA_ANTES = {
     "saldo_por_10k_censo": "Métrica do guia do Datathon: normaliza a comparação entre cidades de portes diferentes.",
     "cresc_emprego_pct": "Saldo do CAGED ÷ pessoal assalariado do CEMPRE 2024 × 100.",
     "rotatividade_pct": "Conceito DIEESE: parte do fluxo que é troca de trabalhadores, não vaga nova.",
-    "salario_medio": "Média do salário declarado em admissões e desligamentos, ponderada pelo nº de movimentações.",
+    # salario_medio deixou de ser a manchete na etapa 3.2c; texto atualizado para marcar que é complemento.
+    "salario_medio": "Média do salário declarado em admissões e desligamentos, ponderada pelo nº de "
+                     "movimentações. Complemento da mediana; sensível a valores extremos.",
 }
 COLUMN_HELP_ANTES = {
     "saldo": "Admissões − desligamentos.",
@@ -47,25 +49,29 @@ NOTAS_ANTES = {
                        "dificuldade de reter mão de obra. Limite: o CEMPRE 2024 é uma aproximação do estoque.",
     "macro_agrupamento": "Agrupamento determinístico pelo 1º dígito do código CBO-2002 (Grande Grupo); os grupos 7 e 8 "
                          "formam a macrofamília operacional.",
-    "macro_salario": "Salário médio inclui todos os salários declarados (ver limites no fim da página).",
-    "salario_relacao": "Relação descritiva: mostra quanto cada grupo recebe em média, não que a escolaridade cause "
-                       "a diferença. Limite: a média inclui salários zerados e não mensais.",
-    "dispersao_relacao": "Relação descritiva entre três medidas do mesmo município; não indica causa.",
-    "renda_ressalva": "Ressalva metodológica: as médias incluem salários informados como zero e valores "
-                      "de periodicidade não mensal (sobretudo por hora; também por dia, semana, tarefa "
-                      "ou variável).",
+    # As três notas salariais foram atualizadas na etapa 3.2c (mediana sem zeros é a medida principal).
+    "macro_salario": "Medida principal: mediana sem zeros (estável a valores extremos). A média, quando exibida, "
+                     "é complemento e inclui todos os salários declarados (ver limites no fim da página).",
+    "salario_relacao": "Relação descritiva: mostra quanto cada grupo recebe (mediana sem zeros), não que a "
+                       "escolaridade cause a diferença. O `salário` do Novo CAGED já é mensalizado na origem (MTE).",
+    "dispersao_relacao": "Relação descritiva entre três medidas do mesmo município; não indica causa. O salário por "
+                         "município é a média (complemento), pois a mediana não é obtida de dados pré-agregados.",
+    "renda_ressalva": "Ressalva metodológica: a medida principal é a mediana sem zeros. A média, quando exibida, "
+                      "inclui salários informados como zero e valores de periodicidade não mensal (sobretudo por "
+                      "hora; também por dia, semana, tarefa ou variável).",
 }
 IDS_ESPERADOS = {
     "saldo", "admissoes", "desligamentos", "giro", "movimentacoes", "saldo_por_10k_censo",
     "saldo_por_10k_estimativa", "giro_por_10k", "cresc_emprego_pct", "rotatividade_pct",
-    "part_industria_vab_2021", "grau_medio", "pct_superior", "salario_medio", "macrofamilia", "periodo",
+    "part_industria_vab_2021", "grau_medio", "pct_superior", "salario_medio", "salario_mediano",
+    "macrofamilia", "periodo",
 }
 
 
 class TestGlossario(unittest.TestCase):
     def test_sixteen_indicators_with_all_fields(self):
         self.assertEqual({i.id for i in G.INDICADORES}, IDS_ESPERADOS)
-        self.assertEqual(len(G.INDICADORES), 16)
+        self.assertEqual(len(G.INDICADORES), 17)  # +salario_mediano (etapa 3.2c)
         for ind in G.INDICADORES:
             for campo in G.Indicador.CAMPOS:
                 with self.subTest(indicador=ind.id, campo=campo):

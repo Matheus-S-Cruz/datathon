@@ -21,6 +21,7 @@ PERIODO = G.PERIODO
 
 def kpis(scope: A.Scope) -> None:
     k = A.kpis(scope)
+    sal_sc = A.salario_estado()   # mediana sem zeros de SC inteira (manchete do salário)
     by_sector = not scope.all_sections
     na = "indisponível com recorte setorial (o estoque do CEMPRE não é aberto por setor)"
     ui.kpi_row([
@@ -38,9 +39,10 @@ def kpis(scope: A.Scope) -> None:
         dict(label="Taxa de rotatividade", value="—" if by_sector else fmt.num(k["rotatividade_pct"], 1) + "%",
              icon="autorenew", accent="orange", note=na if by_sector else G.texto("rotatividade_pct", "kpi_nota"),
              help=G.texto("rotatividade_pct", "kpi_ajuda")),
-        dict(label="Salário médio nas movimentações", value=fmt.brl(k["salario_medio"], 0), icon="payments",
-             accent="amber", note=f"{fmt.pct(k['pct_superior'])} com superior completo ou mais",
-             help=G.texto("salario_medio", "kpi_ajuda")),
+        dict(label="Salário mediano (SC)", value=fmt.brl(sal_sc["salario_mediano_s0"], 0), icon="payments",
+             accent="amber",
+             note=f"média do recorte {fmt.brl(k['salario_medio'], 0)} · {G.texto('salario_mediano', 'kpi_nota')}",
+             help=G.texto("salario_mediano", "kpi_ajuda")),
     ])
 
 
@@ -58,7 +60,7 @@ def findings() -> dict[str, list[str]]:
     mi = A.macro(industrial_only=True)
     neg = mi[mi["saldo"] < 0].sort_values("saldo")
     sg = A.table("salario_por_grau").set_index("grau_cod")
-    med, sup = sg.loc[7, "salario_medio"], sg.loc[9, "salario_medio"]
+    med, sup = sg.loc[7, "salario_mediano_s0"], sg.loc[9, "salario_mediano_s0"]
     onde = [
         f"**Expansão:** a região de **{top_g['regiao']}** tem o maior crescimento do emprego formal "
         f"({fmt.num(top_g['cresc_emprego_pct'], 2)}% sobre o estoque; saldo {fmt.signed(top_g['saldo'])}).",
@@ -75,8 +77,8 @@ def findings() -> dict[str, list[str]]:
         setores.append("**Qualificação:** na indústria, o saldo é negativo em "
                        + ", ".join(f"{r.cbo_grande_grupo} ({fmt.signed(r.saldo)})" for r in neg.itertuples())
                        + (f", enquanto a base operacional cresce ({fmt.signed(op)})." if op > 0 else "."))
-    renda = [f"**Renda:** Nos registros de movimentações com superior completo, a média dos valores salariais "
-             f"informados é de {fmt.brl(sup, 0)}, contra {fmt.brl(med, 0)} para o médio completo — uma diferença "
+    renda = [f"**Renda:** Nos registros de movimentações com superior completo, o salário mediano (sem zeros) "
+             f"é de {fmt.brl(sup, 0)}, contra {fmt.brl(med, 0)} para o médio completo — uma diferença "
              f"de aproximadamente {fmt.pct(sup / med - 1, 0)}."]
     return {"onde": onde, "setores": setores, "renda": renda}
 
@@ -193,20 +195,23 @@ def macro_card() -> None:
                                          label_visibility="collapsed") or "Indústria (B, C, D, F)"
         m = A.macro(industrial_only=scope_lbl.startswith("Indústria")).sort_values("saldo", ascending=False)
         charts.show(charts.signed_hbars(m, "cbo_grande_grupo", "saldo", "Saldo de vagas", extra=[
-            ("salario_medio", "Salário médio", lambda v: fmt.brl(v, 0)),
+            ("salario_mediano_s0", "Salário mediano", lambda v: fmt.brl(v, 0)),
             ("pct_superior", "Com superior completo", fmt.pct),
             ("admissoes", "Admissões", fmt.integer), ("desligamentos", "Desligamentos", fmt.integer)]),
             key="pn_macro_chart")
-        used = ["cbo_grande_grupo", "saldo", "salario_medio", "pct_superior", "admissoes", "desligamentos"]
+        used = ["cbo_grande_grupo", "saldo", "salario_mediano_s0", "salario_medio", "pct_superior",
+                "admissoes", "desligamentos"]
         tables.data_view(
             m[used], "macrofamilias.csv", key="pn_macro_data",
             notes=[f"Período: {PERIODO}. Abrangência: {scope_lbl[0].lower() + scope_lbl[1:]} de Santa Catarina inteira — não "
-                   "acompanha os filtros de região e população da barra lateral.",
+                   "acompanha os filtros de região e população da barra lateral. Salário em R$ por mês.",
                    G.nota("macro_agrupamento"),
                    G.nota("macro_salario")],
-            rename={"cbo_grande_grupo": "Macrofamília", "saldo": "Saldo (vagas)", "salario_medio": "Salário médio (R$)",
+            rename={"cbo_grande_grupo": "Macrofamília", "saldo": "Saldo (vagas)",
+                    "salario_mediano_s0": "Salário mediano (R$, sem zeros)", "salario_medio": "Salário médio (R$)",
                     "pct_superior": "Com superior completo", "admissoes": "Admissões", "desligamentos": "Desligamentos"},
-            ints=["saldo", "admissoes", "desligamentos"], money=["salario_medio"], pct=["pct_superior"])
+            ints=["saldo", "admissoes", "desligamentos"], money=["salario_mediano_s0", "salario_medio"],
+            pct=["pct_superior"])
 
 
 # ------------------------------------------------- evidência 3 · renda e escolaridade
@@ -214,18 +219,21 @@ def macro_card() -> None:
 
 def salary_card() -> None:
     sg = A.table("salario_por_grau").sort_values("grau_ord")
-    with ui.card("Salário médio por escolaridade",
-                 "Média do salário declarado por grau de instrução, em R$. Quase não muda até o médio completo "
-                 "e sobe a partir do superior.", key="salary", scope="estado"):
-        charts.show(charts.ordinal_bars(sg, "grau", "salario_medio", "Salário médio", n_col="n"),
+    with ui.card("Salário mediano por escolaridade",
+                 "Mediana do salário declarado (exclui zeros), em R$ por mês. Quase não muda até o médio "
+                 "completo e sobe a partir do superior.", key="salary", scope="estado"):
+        charts.show(charts.ordinal_bars(sg, "grau", "salario_mediano_s0", "Salário mediano", n_col="n_salario_s0"),
                     key="pn_salary")
         tables.data_view(
-            sg[["grau", "salario_medio", "n"]], "salario_por_escolaridade.csv", key="pn_salary_data",
+            sg[["grau", "salario_mediano_s0", "salario_medio", "n_salario_s0", "n"]],
+            "salario_por_escolaridade.csv", key="pn_salary_data",
             notes=[f"Período: {PERIODO}. Abrangência: todas as admissões e desligamentos de Santa Catarina "
-                   "(não muda com os filtros).",
+                   "(não muda com os filtros). Unidade: R$ por mês.",
                    G.nota("salario_relacao")],
-            rename={"grau": "Grau de instrução", "salario_medio": "Salário médio (R$)", "n": "Movimentações"},
-            money=["salario_medio"], ints=["n"])
+            rename={"grau": "Grau de instrução", "salario_mediano_s0": "Salário mediano (R$, sem zeros)",
+                    "salario_medio": "Salário médio (R$)", "n_salario_s0": "Registros com salário > 0",
+                    "n": "Movimentações"},
+            money=["salario_mediano_s0", "salario_medio"], ints=["n_salario_s0", "n"])
 
 
 def scatter_card(mun: pd.DataFrame) -> None:
@@ -262,7 +270,8 @@ def closing() -> None:
             "- **Fontes:** Novo CAGED/MTE (organização do Datathon); indicadores municipais (IBGE, PNUD, DATASUS, "
             "Siconfi); IBGE — CEMPRE 2024, PIB dos Municípios, Divisão Regional e Malha Municipal.\n"
             "- **Limites:** o CAGED mede fluxo, não estoque; taxas sobre o CEMPRE são aproximações; IDHM é de "
-            "2010; salários declarados podem conter valores extremos.")
+            "2010; o salário usa a **mediana sem zeros** como medida principal (a média, exibida como "
+            "complemento, é puxada por valores extremos). Ver `docs/metodologia_salarial.md`.")
     with c[1], ui.card("Explore mais", key="more"):
         st.page_link("views/02_caged_explorer.py", label="Consultar os microdados no Explorador",
                      icon=":material/table_view:")

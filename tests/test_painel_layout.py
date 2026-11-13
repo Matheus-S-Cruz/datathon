@@ -76,14 +76,15 @@ class TestPainelLayout(unittest.TestCase):
         self.assertTrue(set(links) <= set(ids))
 
     def test_income_reading_is_descriptive_with_caveat(self):
+        # Etapa 3.2c: a leitura passou a usar o salário mediano sem zeros (medida principal),
+        # mantendo a linguagem descritiva (não causal).
         text = " ".join(m.value for m in self.at.markdown)
-        self.assertIn("Nos registros de movimentações com superior completo, a média dos valores salariais "
-                      "informados é de R$ 3.990, contra R$ 2.354 para o médio completo — uma diferença de "
-                      "aproximadamente 70%.", text)
+        self.assertIn("Nos registros de movimentações com superior completo, o salário mediano (sem zeros) "
+                      "é de R$ 3.000, contra R$ 2.155 para o médio completo — uma diferença de "
+                      "aproximadamente 39%.", text)
         self.assertNotIn("paga", text)
         captions = " ".join(c.value for c in self.at.caption)
-        self.assertIn("as médias incluem salários informados como zero e valores de periodicidade não mensal",
-                      captions)
+        self.assertIn("a medida principal é a mediana sem zeros", captions)
 
     def test_kpi_help_is_clickable(self):
         kpis = next(h for h in self.html if "rx-kpis" in h)
