@@ -17,7 +17,8 @@ def bubble_map(mun) -> None:
     with ui.card("Mapa de calor: saldo e rotatividade por município",
                  "Cor = saldo por 10 mil hab. (azul = expansão, laranja = retração); tamanho = giro (admissões + "
                  "desligamentos) por 10 mil hab. Bolha grande e laranja = alta rotatividade com saldo negativo. "
-                 "O mapa de fundo precisa de internet; as bolhas aparecem mesmo sem ele.", key="ter_bubble"):
+                 "O mapa de fundo precisa de internet; as bolhas aparecem mesmo sem ele.", key="ter_bubble",
+                 scope="recorte"):
         if coords is None:
             st.warning("Arquivo de coordenadas não encontrado (`data/reference/municipios_sc_coords.parquet`).")
             return
@@ -46,7 +47,8 @@ def bubble_map(mun) -> None:
 def turnover_map(scope: A.Scope, mun) -> None:
     with ui.card("Rotatividade sobre o estoque de emprego formal",
                  "Mín(admissões, desligamentos) ÷ assalariados do CEMPRE 2024. Quanto mais escuro, maior a "
-                 "parcela do emprego formal que foi trocada no período.", key="ter_turn", tag="IBGE"):
+                 "parcela do emprego formal que foi trocada no período.", key="ter_turn", tag="IBGE",
+                 scope="recorte"):
         if not scope.all_sections:
             st.info("Indisponível com recorte setorial: o CEMPRE municipal não é aberto por setor.",
                     icon=":material/info:")
@@ -61,11 +63,13 @@ def turnover_map(scope: A.Scope, mun) -> None:
 def rankings(mun) -> None:
     c = st.columns(2, gap="medium")
     cols = [("saldo", "Saldo", fmt.signed), ("populacao", "População", fmt.integer)]
-    with c[0], ui.card("Top 15 — expansão acelerada", "Maiores saldos por 10 mil habitantes.", key="ter_top"):
+    with c[0], ui.card("Top 15 — expansão acelerada", "Maiores saldos por 10 mil habitantes.", key="ter_top",
+                       scope="recorte"):
         top = mun.sort_values("saldo_por_10k", ascending=False).head(15)
         charts.show(charts.signed_hbars(top, "municipio", "saldo_por_10k", "Saldo por 10 mil hab.", cols),
                     key="ter_top_chart")
-    with c[1], ui.card("Top 15 — retração", "Menores saldos por 10 mil habitantes.", key="ter_bottom"):
+    with c[1], ui.card("Top 15 — retração", "Menores saldos por 10 mil habitantes.", key="ter_bottom",
+                       scope="recorte"):
         bot = mun.sort_values("saldo_por_10k").head(15)
         charts.show(charts.signed_hbars(bot, "municipio", "saldo_por_10k", "Saldo por 10 mil hab.", cols),
                     key="ter_bottom_chart")
@@ -74,7 +78,8 @@ def rankings(mun) -> None:
 def expansion_vs_turnover(mun) -> None:
     with ui.card("Expansão × giro",
                  "Cada bolha é um município. À direita, mais saldo; no alto, mais giro (admissões + "
-                 "desligamentos). Tamanho = população; cor = salário médio.", key="ter_scatter"):
+                 "desligamentos). Tamanho = população; cor = salário médio.", key="ter_scatter",
+                 scope="recorte"):
         d = mun[mun["populacao"] > 0]
         charts.show(charts.bubble(d, "saldo_por_10k", "giro_por_10k", "salario_medio", "populacao", "municipio",
                                   "Saldo por 10 mil hab.", "Giro por 10 mil hab.", "Salário médio (R$)",
@@ -87,7 +92,7 @@ def main() -> None:
     ui.header("Território", "Municípios em expansão, em retração e com alta rotatividade.",
               eyebrow="Análises complementares")
     scope = filters.analysis_scope()
-    ui.active_filters(scope.describe())
+    ui.scope_bar(scope.describe())
     mun = A.municipal(scope)
     bubble_map(mun)
     c = st.columns([0.45, 0.55], gap="medium")
