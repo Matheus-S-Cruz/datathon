@@ -53,3 +53,18 @@ def to_csv_bytes(df: pd.DataFrame) -> bytes:
 def download(df: pd.DataFrame, filename: str, label: str = "Baixar tabela (CSV)", key: str | None = None):
     st.download_button(label, to_csv_bytes(df), file_name=filename, mime="text/csv",
                        icon=":material/download:", key=key)
+
+
+def data_view(df: pd.DataFrame, filename: str, *, key: str, rename: dict | None = None,
+              notes: list[str] | None = None, **fmt_kwargs) -> None:
+    """Expansor "Ver dados" de um gráfico: as mesmas linhas e colunas usadas para desenhá-lo,
+    com os nomes de coluna trazendo a unidade, e o CSV com exatamente essas linhas e valores.
+
+    `notes`: linhas de metodologia (período, abrangência, fórmula, limites) mostradas acima da tabela.
+    O CSV usa os valores numéricos sem arredondar, com separador ';' e decimal ','.
+    """
+    with st.expander("Ver dados e método", icon=":material/table_chart:"):
+        for line in notes or []:
+            st.caption(line)
+        show(df, rename=rename, key=f"{key}_table", height=min(38 * len(df) + 40, 420), **fmt_kwargs)
+        download(df.rename(columns=rename or {}), filename, key=f"{key}_csv")

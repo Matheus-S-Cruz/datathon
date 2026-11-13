@@ -185,6 +185,11 @@ def inject_css() -> None:
     @container rxmain (max-width: 520px) {{
         div[class*="st-key-card_"] {{ padding: .85rem .8rem .45rem .8rem; }}
     }}
+    /* Mapa do painel em tela estreita: o contêiner encolhe e o Plotly redesenha o mapa no espaço
+       disponível (mesmos dados, escala e interação). Acima de 560 px a altura segue a da figura (420). */
+    @container rxmain (max-width: 560px) {{
+        div.st-key-card_map [data-testid="stPlotlyChart"] {{ height: 300px !important; }}
+    }}
     /* cards: ui.card() e st.container(border=True) */
     div[class*="st-key-card_"], div[data-testid="stVerticalBlockBorderWrapper"] {{
         background: {t['surface']}; border: 1px solid {t['border']} !important;
@@ -233,6 +238,39 @@ def inject_css() -> None:
                    margin-top: .9rem; border-bottom: 1px solid {t['border']}; padding-bottom: .35rem; }}
     .rx-section b {{ font-size: 1.08rem; font-weight: 650; color: {t['ink']}; }}
     .rx-section span {{ font-size: .84rem; color: {t['muted']}; }}
+    .rx-section .rx-step {{ font-size: .72rem; font-weight: 650; letter-spacing: .08em; text-transform: uppercase;
+                            color: {t['blue']}; }}
+    /* selo de escopo dos cards: diz se o card segue o recorte ou mostra o estado inteiro */
+    .rx-scope {{ display: inline-flex; align-items: center; gap: .25rem; font-size: .68rem; font-weight: 600;
+                 padding: .08rem .5rem .08rem .4rem; border-radius: 999px; margin-left: .45rem; vertical-align: 2px;
+                 border: 1px solid {t['border']}; color: {t['ink2']}; white-space: nowrap; }}
+    .rx-scope i {{ font-family: {ICON_FONT}; font-style: normal; font-size: 13px; line-height: 1; }}
+    .rx-scope.recorte {{ background: {t['chip_blue']}; border-color: transparent; color: {t['blue']}; }}
+    /* barra de recorte (filtros ativos) */
+    .rx-scopebar {{ display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; font-size: .82rem;
+                    color: {t['muted']}; }}
+    .rx-chip {{ display: inline-flex; align-items: center; gap: .3rem; padding: .18rem .65rem; border-radius: 999px;
+                background: {t['chip_blue']}; color: {t['blue']}; font-weight: 600; font-size: .78rem; }}
+    .rx-chip.neutral {{ background: {t['surface']}; color: {t['ink2']}; border: 1px solid {t['border']}; }}
+    .rx-chip i {{ font-family: {ICON_FONT}; font-style: normal; font-size: 14px; line-height: 1; }}
+    /* ajuda dos KPIs: elemento details nativo, funciona com toque e teclado.
+       Atenção: não escrever tags HTML (sinal de menor) dentro deste CSS; o sanitizador do
+       st.html descarta o bloco de estilo inteiro. */
+    .rx-kpi {{ display: flex; flex-direction: column; }}
+    .rx-kpi-help {{ margin-top: auto; padding-top: .45rem; font-size: .76rem; color: {t['ink2']}; }}
+    .rx-kpi-help summary {{ cursor: pointer; list-style: none; display: inline-flex; align-items: center; gap: .25rem;
+                            color: {t['muted']}; font-weight: 550; border-radius: 6px; }}
+    .rx-kpi-help summary::-webkit-details-marker {{ display: none; }}
+    .rx-kpi-help summary i {{ font-family: {ICON_FONT}; font-style: normal; font-size: 15px; line-height: 1; }}
+    .rx-kpi-help summary:hover, .rx-kpi-help summary:focus-visible {{ color: {t['blue']}; outline: none; }}
+    .rx-kpi-help[open] summary {{ color: {t['blue']}; }}
+    .rx-kpi-help div {{ margin-top: .3rem; line-height: 1.45; }}
+    /* leituras (resposta em 3 cards) */
+    .rx-read {{ display: flex; flex-direction: column; gap: .5rem; }}
+    .rx-read ul {{ margin: 0; padding-left: 1.05rem; display: flex; flex-direction: column; gap: .35rem;
+                   font-size: .9rem; line-height: 1.5; color: {t['ink']}; }}
+    .rx-read a {{ font-size: .8rem; font-weight: 600; color: {t['blue']}; text-decoration: none; }}
+    .rx-read a:hover, .rx-read a:focus-visible {{ text-decoration: underline; }}
     </style>""")
 
 
@@ -261,24 +299,64 @@ def kpi_row(items: list[dict]) -> None:
         acc = it.get("accent") or ACCENTS[i % len(ACCENTS)]
         note = f'<div class="rx-kpi-note">{it["note"]}</div>' if it.get("note") else ""
         tip = (it.get("help") or "").replace('"', "&quot;")
+        # Ajuda visível com clique, toque ou teclado (o title continua para quem usa o mouse).
+        helper = (f'<details class="rx-kpi-help"><summary><i>info</i>O que é</summary><div>{it["help"]}</div>'
+                  '</details>') if it.get("help") else ""
         cards.append(
             f'<div class="rx-kpi" style="--accent:{t[acc]};--chip:{t["chip_" + acc]}" title="{tip}">'
             f'<div class="rx-kpi-top"><div class="rx-kpi-icon">{it.get("icon", "monitoring")}</div>'
             f'<div class="rx-kpi-label">{it["label"]}</div></div>'
-            f'<div class="rx-kpi-value">{it["value"]}</div>{note}</div>')
+            f'<div class="rx-kpi-value">{it["value"]}</div>{note}{helper}</div>')
     st.html(f'<div class="rx-kpis">{"".join(cards)}</div>')
 
 
-def section(title: str, hint: str | None = None) -> None:
+def section(title: str, hint: str | None = None, *, anchor: str | None = None, step: str | None = None) -> None:
+    """Título de seção. `anchor` cria um destino para links internos (#anchor); `step` é o rótulo
+    curto acima do título (ex.: "Evidência 1")."""
     span = f"<span>{hint}</span>" if hint else ""
-    st.html(f'<div class="rx-section"><b>{title}</b>{span}</div>')
+    ident = f' id="{anchor}"' if anchor else ""
+    lead = f'<span class="rx-step">{step}</span>' if step else ""
+    st.html(f'<div class="rx-section"{ident}>{lead}<b>{title}</b>{span}</div>')
 
 
-def card(title: str | None = None, subtitle: str | None = None, *, key: str, tag: str | None = None):
-    """Card com título descritivo e leitura. Uso: `with ui.card("Título", "Como ler", key="x"): ...`."""
+SCOPES = {
+    "recorte": ("filter_alt", "Segue o recorte", "Este card usa os filtros da barra lateral."),
+    "estado": ("public", "Estado inteiro", "Este card mostra Santa Catarina inteira e não muda com os filtros."),
+}
+
+
+def card(title: str | None = None, subtitle: str | None = None, *, key: str, tag: str | None = None,
+         scope: str | None = None):
+    """Card com título descritivo e leitura. Uso: `with ui.card("Título", "Como ler", key="x"): ...`.
+    `scope`: "recorte" (segue os filtros) ou "estado" (Santa Catarina inteira) — exibido como selo."""
     box = st.container(key=f"card_{key}")
     if title:
         tg = f'<span class="rx-tag">{tag}</span>' if tag else ""
+        sc = ""
+        if scope:
+            icon, label, tip = SCOPES[scope]
+            sc = f'<span class="rx-scope {scope}" title="{tip}"><i>{icon}</i>{label}</span>'
         sub = f'<div class="rx-card-sub">{subtitle}</div>' if subtitle else ""
-        box.html(f'<div class="rx-card-title">{title}{tg}</div>{sub}')
+        box.html(f'<div class="rx-card-title">{title}{sc}{tg}</div>{sub}')
     return box
+
+
+def scope_bar(items: list[str]) -> None:
+    """Filtros ativos como chips. Sem filtros, diz explicitamente que o recorte é o estado inteiro."""
+    if items:
+        chips = "".join(f'<span class="rx-chip"><i>filter_alt</i>{x}</span>' for x in items)
+        st.html(f'<div class="rx-scopebar">Recorte aplicado: {chips}'
+                '<span>· mude na barra lateral</span></div>')
+    else:
+        st.html('<div class="rx-scopebar">Recorte: <span class="rx-chip neutral"><i>public</i>Santa Catarina '
+                'inteira, todos os setores</span><span>· filtre na barra lateral</span></div>')
+
+
+def reading_card(title: str, items: list[str], link: str, link_label: str, *, key: str, scope: str = "estado",
+                 note: str | None = None):
+    """Card de leitura: frases calculadas (markdown), ressalva opcional e link para o gráfico que as sustenta."""
+    with card(title, key=key, scope=scope):
+        st.markdown("\n".join(f"- {i}" for i in items))
+        if note:
+            st.caption(note)
+        st.html(f'<div class="rx-read"><a href="#{link}">{link_label} ↓</a></div>')
