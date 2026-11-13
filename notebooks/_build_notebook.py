@@ -56,15 +56,15 @@ pd.set_option("display.width", 200)
 
 # Caminhos (ajuste se executar de outro diretório)
 BASE = ".." if os.path.basename(os.getcwd()) == "notebooks" else "."
-DATASET = os.path.join(BASE, "dataset")
+DATASET = os.path.join(BASE, "data")  # data/raw + data/reference
 OUTPUTS = os.path.join(BASE, "outputs")
 os.makedirs(OUTPUTS, exist_ok=True)
 
-CAGED_PARQUET = os.path.join(DATASET, "Novo_Caged_MOV_Limpo.parquet")
-MUNIC_CSV     = os.path.join(DATASET, "Municipios_SC_limpo.csv")
-DICIONARIO    = os.path.join(DATASET, "Dicionario_de_dados.xlsx")
+CAGED_PARQUET = os.path.join(DATASET, "raw", "Novo_Caged_MOV_Limpo.parquet")
+MUNIC_CSV     = os.path.join(DATASET, "reference", "Municipios_SC_limpo.csv")
+DICIONARIO    = os.path.join(DATASET, "reference", "Dicionario_de_dados.xlsx")
 
-print("dataset:", os.path.abspath(DATASET))
+print("data:", os.path.abspath(DATASET))
 print("outputs:", os.path.abspath(OUTPUTS))""")
 
 # ------------------------------------------------------------------ 1. INGESTÃO
@@ -129,6 +129,13 @@ df["salario"]        = to_float_br(df["salário"])
 df["salario_fixo"]   = to_float_br(df.get("valorsaláriofixo", pd.Series(index=df.index)))
 df["idade"]          = pd.to_numeric(df["idade"], errors="coerce")
 df["grau_cod"]       = pd.to_numeric(df["graudeinstrução"], errors="coerce")
+# Escolaridade: os códigos NÃO são uma escala numérica (80 = pós-graduação fica entre
+# 9 = superior e 10 = mestrado; 99 = não identificado). Convertemos para a posição
+# ordinal 1..12 e deixamos 99 de fora, em vez de tirar a média dos códigos.
+ORDEM_INSTR = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "80", "10", "11"]
+_g = df["graudeinstrução"].astype(str).str.strip().str.replace(r"\\.0$", "", regex=True)
+df["grau_ord"]       = _g.map({c: i + 1 for i, c in enumerate(ORDEM_INSTR)})   # 99 -> NaN
+df["superior"]       = _g.isin(["9", "80", "10", "11"]).astype(float).where(df["grau_ord"].notna())
 df["mun_cod"]        = df["município"].astype(str).str.strip()
 
 # Filtro de exclusões (defensivo)
@@ -211,16 +218,53 @@ md("""## 4. Métricas de negócio
   que diferencia "apagão" (giro alto, saldo baixo) de "expansão" (saldo alto).
 """)
 
+md("""### 4.1 Medidas salariais (metodologia — etapa 3.2)
+
+Ver `docs/metodologia_salarial.md`. Decisões aplicadas aqui, **sem sobrescrever** a
+coluna de origem `salario` nem a `salario_medio` histórica:
+
+- `salario` (origem) **já é mensalizado pelo MTE** — não convertemos periodicidades.
+- Medida **principal**: **mediana excluindo zeros** (`salario_mediano_s0`), estável a
+  zeros (33.912 registros) e extremos (535 acima de R$ 50 mil).
+- Medida **complementar**, sempre rotulada: a média. Mantemos `salario_medio`
+  (média de todos os registros, inclui zeros) para compatibilidade e rastreabilidade,
+  e acrescentamos `salario_medio_s0` (média excluindo zeros).
+- **Rastreabilidade**: `n_salario` (registros com salário não nulo) e `n_salario_s0`
+  (registros com salário > 0, a base da medida principal).
+
+`salario > 0` isola os registros com remuneração declarada; os zeros ficam contados
+em `n_salario - n_salario_s0`, nunca descartados silenciosamente.
+""")
+
+code('''# Agregações salariais da metodologia 3.2 (ver docs/metodologia_salarial.md).
+# A coluna de origem `salario` é preservada; nada é sobrescrito. s0 = "sem zeros" (salario > 0).
+def _median_pos(s):
+    v = s[s > 0]
+    return v.median() if len(v) else np.nan
+
+def _mean_pos(s):
+    v = s[s > 0]
+    return v.mean() if len(v) else np.nan
+
+SAL_AGG = dict(
+    salario_medio=("salario", "mean"),             # media, inclui zeros (historico; complemento)
+    salario_mediano=("salario", "median"),         # mediana, inclui zeros (historico)
+    salario_medio_s0=("salario", _mean_pos),       # media sem zeros (complemento rotulado)
+    salario_mediano_s0=("salario", _median_pos),   # MEDIDA PRINCIPAL: mediana sem zeros
+    n_salario=("salario", "count"),                # registros com salario nao nulo
+    n_salario_s0=("salario", lambda s: int((s > 0).sum())),  # registros com salario > 0 (base da principal)
+)''')
+
 code("""def agrega(grupo_cols, nome_pop="populacao"):
     g = dfm.groupby(grupo_cols, dropna=False).agg(
         admissoes=("admissao", "sum"),
         desligamentos=("desligamento", "sum"),
         saldo=("saldo", "sum"),
         movimentacoes=("saldo", "size"),
-        salario_medio=("salario", "mean"),
-        salario_mediano=("salario", "median"),
-        grau_medio=("grau_cod", "mean"),
+        grau_medio=("grau_ord", "mean"),       # escala ordinal 1..12 (ver seção 2)
+        pct_superior=("superior", "mean"),    # fração com superior completo ou mais
         idade_media=("idade", "mean"),
+        **SAL_AGG,                             # medidas salariais da metodologia 3.2 (seção 4.1)
     ).reset_index()
     g["giro"] = g["admissoes"] + g["desligamentos"]
     return g
@@ -243,6 +287,73 @@ print(terr.sort_values("saldo_por_10k", ascending=False)[display_cols].head(10).
 
 print("\\nTOP 10 RETRAÇÃO / APAGÃO (menor saldo por 10 mil hab.):")
 print(terr.sort_values("saldo_por_10k")[display_cols].head(10).to_string(index=False))""")
+
+# ------------------------------------------------------------------ 5b. IBGE
+md("""### 5.1 Enriquecimento com bases públicas do IBGE
+
+O CAGED mede **fluxo** (admissões e desligamentos), não **estoque** de empregos. Para
+normalizar melhor do que só pela população, cruzamos com bases oficiais do IBGE baixadas por
+`src/enrichment/ibge.py` (APIs públicas, versionadas em `data/external/`):
+
+| Base | Uso |
+|---|---|
+| **CEMPRE 2024** (SIDRA 9509) — pessoal ocupado assalariado | denominador do emprego formal: **saldo / estoque** e **taxa de rotatividade** |
+| **PIB dos Municípios** (SIDRA 5938) — PIB 2023 e VAB por atividade 2021 | peso da **indústria** no valor adicionado municipal |
+| **Divisão regional** (API de Localidades) | agregação por **região geográfica intermediária e imediata** |
+| **Malha municipal** (API de Malhas) | mapa coroplético no dashboard |
+
+Métricas novas:
+- `cresc_emprego_pct` = saldo do CAGED / assalariados CEMPRE 2024 × 100 — quanto o emprego formal
+  cresceu em 12 meses em relação ao estoque de partida;
+- `rotatividade_pct` = mín(admissões, desligamentos) / assalariados × 100 — conceito do DIEESE:
+  a parte do fluxo que é **reposição** (troca de trabalhadores) e não criação líquida de vagas.
+
+> Premissa: o CEMPRE de 2024 é o estoque mais recente publicado e antecede o período do CAGED
+> (set/2025–ago/2026). As taxas são aproximações e não substituem a RAIS.
+""")
+
+code("""EXTERNAL = os.path.join(BASE, "data", "external")
+ibge = (pd.read_parquet(os.path.join(EXTERNAL, "ibge_regioes_sc.parquet"))
+          .merge(pd.read_parquet(os.path.join(EXTERNAL, "ibge_cempre_2024.parquet")), on="codigo_ibge")
+          .merge(pd.read_parquet(os.path.join(EXTERNAL, "ibge_pib_municipal.parquet")), on="codigo_ibge"))
+ibge["mun_cod"] = ibge["codigo_ibge"].str[:6]          # mesma chave de 6 dígitos do CAGED
+print("Municípios IBGE:", len(ibge), "| sem par no CAGED:",
+      len(set(ibge["mun_cod"]) - set(terr["mun_cod"])))
+
+terr = terr.merge(ibge.drop(columns=["nome_ibge"]), on="mun_cod", how="left")
+terr["cresc_emprego_pct"] = terr["saldo"] / terr["assalariados"] * 100
+terr["rotatividade_pct"]  = terr[["admissoes", "desligamentos"]].min(axis=1) / terr["assalariados"] * 100
+
+# Mapa município -> região (os dois níveis) para calcular a mediana salarial por região
+# diretamente dos microdados (a mediana não pode ser obtida ponderando medianas municipais).
+_mun2reg = terr.set_index("mun_cod")[["regiao_intermediaria", "regiao_imediata"]]
+dfm_reg = dfm.join(_mun2reg, on="mun_cod")
+
+def agrega_regiao(nivel):
+    soma = ["admissoes", "desligamentos", "saldo", "movimentacoes", "populacao", "assalariados",
+            "pib_2023", "vab_total_2021", "vab_industria_2021", "n_salario", "n_salario_s0"]
+    g = terr.groupby(nivel, as_index=False)[soma].sum()
+    g = g.rename(columns={nivel: "regiao"}).assign(nivel=nivel)
+    g["saldo_por_10k"]      = g["saldo"] / g["populacao"] * 10_000
+    g["cresc_emprego_pct"]  = g["saldo"] / g["assalariados"] * 100
+    g["rotatividade_pct"]   = g[["admissoes", "desligamentos"]].min(axis=1) / g["assalariados"] * 100
+    g["part_industria_vab_2021"] = g["vab_industria_2021"] / g["vab_total_2021"]
+    # salário médio e escolaridade ponderados pelo nº de movimentações de cada município
+    for col in ["salario_medio", "salario_medio_s0", "grau_medio", "pct_superior"]:
+        w = terr.dropna(subset=[col])
+        media = w.groupby(nivel).apply(lambda d: np.average(d[col], weights=d["movimentacoes"]),
+                                       include_groups=False).rename(col)
+        g = g.merge(media, left_on="regiao", right_index=True, how="left")
+    # medida principal: mediana sem zeros, calculada direto dos microdados por região
+    med = (dfm_reg.groupby(nivel)["salario"].apply(_median_pos).rename("salario_mediano_s0"))
+    g = g.merge(med, left_on="regiao", right_index=True, how="left")
+    return g
+
+regioes = pd.concat([agrega_regiao("regiao_intermediaria"), agrega_regiao("regiao_imediata")],
+                    ignore_index=True)
+print(regioes[regioes["nivel"] == "regiao_intermediaria"]
+      [["regiao", "saldo", "cresc_emprego_pct", "rotatividade_pct", "part_industria_vab_2021"]]
+      .sort_values("cresc_emprego_pct", ascending=False).to_string(index=False))""")
 
 # ------------------------------------------------------------------ 6. SETOR
 md("""## 6. Eixo setorial — setores industriais que lideram
@@ -279,18 +390,34 @@ desatratividade salarial, escolaridade não atendida ou compressão salarial.
 code("""# Perfil admitido vs desligado por escolaridade
 perfil = (dfm.assign(mov=np.where(dfm["saldo"] > 0, "Admitido", "Desligado"))
             .groupby(["mov","grau_instr"], dropna=False)
-            .agg(n=("saldo","size"), salario_medio=("salario","mean"))
+            .agg(n=("saldo","size"), **SAL_AGG)
             .reset_index())
 print(perfil.to_string(index=False))
 
-# Salário médio por grau de instrução (há compressão salarial?)
+# Salário por grau de instrução (há compressão salarial?). Medida principal: mediana sem
+# zeros (salario_mediano_s0); média mantida como complemento. Ver docs/metodologia_salarial.md.
 sal_grau = (dfm.groupby("grau_cod")
               .agg(grau=("grau_instr","first"),
-                   salario_medio=("salario","mean"),
-                   n=("salario","size"))
-              .reset_index().sort_values("grau_cod"))
-print("\\nSalário médio por grau de instrução:")
-print(sal_grau[["grau","salario_medio","n"]].to_string(index=False))""")
+                   grau_ord=("grau_ord","first"),
+                   n=("salario","size"),
+                   **SAL_AGG)
+              .reset_index().sort_values("grau_ord", na_position="last"))
+print("\\nSalário por grau de instrução (mediana sem zeros × média):")
+print(sal_grau[["grau","salario_mediano_s0","salario_medio","n","n_salario_s0"]].to_string(index=False))
+
+# Resumo salarial do ESTADO inteiro (uma linha). O painel usa a mediana sem zeros como
+# manchete; a mediana geral não pode ser obtida ponderando medianas de grupos, por isso é
+# calculada aqui sobre todos os registros. Ver docs/metodologia_salarial.md.
+sal_resumo = pd.DataFrame([{
+    "salario_mediano_s0": _median_pos(dfm["salario"]),
+    "salario_medio_s0":   _mean_pos(dfm["salario"]),
+    "salario_medio":      dfm["salario"].mean(),
+    "salario_mediano":    dfm["salario"].median(),
+    "n_salario":          int(dfm["salario"].count()),
+    "n_salario_s0":       int((dfm["salario"] > 0).sum()),
+}])
+print("\\nResumo salarial do estado (R$/mês):")
+print(sal_resumo.to_string(index=False))""")
 
 # ------------------------------------------------------------------ 8. IA / CBO
 md("""## 8. Enriquecimento com IA — agrupamento de CBOs em macrofamílias
@@ -326,11 +453,26 @@ macro = (dfm.groupby("cbo_grande_grupo")
            .agg(saldo=("saldo","sum"),
                 admissoes=("admissao","sum"),
                 desligamentos=("desligamento","sum"),
-                salario_medio=("salario","mean"),
-                grau_medio=("grau_cod","mean"),
-                n_cbos=("cbo2002ocupação","nunique"))
+                grau_medio=("grau_ord","mean"),
+                pct_superior=("superior","mean"),
+                n_cbos=("cbo2002ocupação","nunique"),
+                **SAL_AGG)
            .reset_index().sort_values("saldo", ascending=False))
-print(macro.to_string(index=False))""")
+print(macro.to_string(index=False))
+
+# Mesmo agrupamento, só nos setores industriais (B, C, D, F): o gargalo da INDÚSTRIA é
+# operacional ou técnico?
+macro_ind = (dfm[dfm["seção"].isin(SETORES_INDUSTRIAIS)].groupby("cbo_grande_grupo")
+               .agg(saldo=("saldo","sum"),
+                    admissoes=("admissao","sum"),
+                    desligamentos=("desligamento","sum"),
+                    grau_medio=("grau_ord","mean"),
+                    pct_superior=("superior","mean"),
+                    n_cbos=("cbo2002ocupação","nunique"),
+                    **SAL_AGG)
+               .reset_index().sort_values("saldo", ascending=False))
+print("\\nSó setores industriais:")
+print(macro_ind.to_string(index=False))""")
 
 code("""# 8.2 (Opcional) Refino via LLM — nomeia macrofamílias a partir dos top CBOs
 def refinar_macrofamilias_llm(top_n=60):
@@ -380,7 +522,10 @@ code("""saidas = {
     "agg_municipio_setor.parquet":  terr_setor,
     "perfil_adm_desl.parquet":      perfil,
     "salario_por_grau.parquet":     sal_grau,
+    "salario_resumo.parquet":       sal_resumo,
     "macrofamilias_cbo.parquet":    macro,
+    "macrofamilias_industria.parquet": macro_ind,
+    "agg_regiao.parquet":           regioes,
 }
 for nome, tabela in saidas.items():
     caminho = os.path.join(OUTPUTS, nome)

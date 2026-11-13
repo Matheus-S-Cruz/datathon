@@ -6,11 +6,26 @@ __pycache__/
 venv/
 env/
 
-# Dados brutos pesados (use a versão .parquet versionada em dataset/)
+# Dados pesados ou gerados
+# O CAGED é versionado apenas em Parquet (data/raw/Novo_Caged_MOV_Limpo.parquet).
+# O CSV original (~395 MB) ultrapassa o limite de 100 MB do GitHub.
+Novo_Caged_MOV_Limpo.csv
+data/raw/*.csv
 *.csv.gz
 *.csv.xz
-Novo_Caged_MOV_Limpo.csv
+*.zip
+# Saídas do pipeline (regeneráveis a partir do código)
+data/processed/
 
-# Ambiente / SO
-.DS_Store
+# Credenciais e segredos (chaves de API de IA etc.)
 .env
+.env.*
+*.key
+secrets.toml
+.streamlit/secrets.toml
+
+# Ambiente / SO / editores
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
