@@ -14,8 +14,9 @@ import streamlit as st
 from dashboard import formatting as fmt
 from dashboard.components import charts, filters, tables, ui
 from dashboard.services import analytics as A
+from src import glossario as G
 
-PERIODO = "set/2025 a ago/2026 (competência de declaração do Novo CAGED)"
+PERIODO = G.PERIODO
 
 
 def kpis(scope: A.Scope) -> None:
@@ -25,21 +26,21 @@ def kpis(scope: A.Scope) -> None:
     ui.kpi_row([
         dict(label="Saldo de vagas formais", value=fmt.signed(k["saldo"]), icon="trending_up", accent="blue",
              note=f"{fmt.integer(k['admissoes'])} admissões · {fmt.integer(k['desligamentos'])} desligamentos",
-             help="Admissões − desligamentos no Novo CAGED, set/2025 a ago/2026."),
+             help=G.texto("saldo", "kpi_ajuda")),
         dict(label="Saldo por 10 mil habitantes", value=fmt.num(k["saldo_por_10k"], 1), icon="groups",
              accent="violet", note=f"{fmt.integer(k['municipios'])} municípios no recorte",
-             help="Métrica do guia do Datathon: normaliza a comparação entre cidades de portes diferentes."),
+             help=G.texto("saldo_por_10k_censo", "kpi_ajuda")),
         dict(label="Crescimento do emprego formal",
              value="—" if by_sector else fmt.num(k["cresc_emprego_pct"], 2) + "%", icon="show_chart",
              accent="green", note=na if by_sector else
              f"sobre {fmt.integer(k['assalariados'])} assalariados (IBGE/CEMPRE 2024)",
-             help="Saldo do CAGED ÷ pessoal assalariado do CEMPRE 2024 × 100."),
+             help=G.texto("cresc_emprego_pct", "kpi_ajuda")),
         dict(label="Taxa de rotatividade", value="—" if by_sector else fmt.num(k["rotatividade_pct"], 1) + "%",
-             icon="autorenew", accent="orange", note=na if by_sector else "reposição: mín(adm., desl.) ÷ estoque",
-             help="Conceito DIEESE: parte do fluxo que é troca de trabalhadores, não vaga nova."),
+             icon="autorenew", accent="orange", note=na if by_sector else G.texto("rotatividade_pct", "kpi_nota"),
+             help=G.texto("rotatividade_pct", "kpi_ajuda")),
         dict(label="Salário médio nas movimentações", value=fmt.brl(k["salario_medio"], 0), icon="payments",
              accent="amber", note=f"{fmt.pct(k['pct_superior'])} com superior completo ou mais",
-             help="Média do salário declarado em admissões e desligamentos, ponderada pelo nº de movimentações."),
+             help=G.texto("salario_medio", "kpi_ajuda")),
     ])
 
 
@@ -92,9 +93,7 @@ def readings() -> None:
     with c[2]:
         ui.reading_card("Renda e escolaridade", f["renda"], "ev-renda",
                         "Ver a relação entre renda e escolaridade", key="read_renda",
-                        note="Ressalva metodológica: as médias incluem salários informados como zero e valores "
-                             "de periodicidade não mensal (sobretudo por hora; também por dia, semana, tarefa "
-                             "ou variável).")
+                        note=G.nota("renda_ressalva"))
 
 
 # ---------------------------------------------------------------- evidência 1 · onde
@@ -124,9 +123,8 @@ def map_card(scope: A.Scope, mun: pd.DataFrame) -> None:
             mun[used], f"mapa_{col}.csv", key="pn_map_data",
             notes=[f"Período: {PERIODO}. Abrangência: municípios de SC no recorte atual "
                    f"({fmt.integer(len(mun))}).",
-                   "Saldo por 10 mil hab. = (admissões − desligamentos) ÷ população × 10.000. "
-                   "Crescimento do emprego = saldo ÷ assalariados do CEMPRE 2024 × 100 (só sem recorte setorial).",
-                   "Limite: o CAGED mede fluxo de admissões e desligamentos, não o estoque de empregos."],
+                   G.nota("mapa_formulas"),
+                   G.nota("limite_fluxo")],
             rename={"mun_cod": "Código do município (6 dígitos)", "municipio": "Município",
                     "saldo_por_10k": "Saldo por 10 mil hab.", "cresc_emprego_pct": "Crescimento do emprego (%)",
                     "saldo": "Saldo (vagas)", "rotatividade_pct": "Rotatividade (%)", "populacao": "População",
@@ -154,13 +152,10 @@ def regions_card() -> None:
             reg[used], "regioes_intermediarias.csv", key="pn_regions_data",
             notes=[f"Período: {PERIODO}. Abrangência: as 7 regiões geográficas intermediárias do IBGE "
                    "(Santa Catarina inteira; não muda com os filtros).",
-                   "Crescimento = saldo ÷ assalariados do CEMPRE 2024 × 100. Rotatividade = mín(admissões, "
-                   "desligamentos) ÷ assalariados × 100 (conceito DIEESE): a parte do fluxo que é troca de "
-                   "trabalhadores, não vaga nova.",
+                   G.nota("regioes_formulas"),
                    f"Linhas de referência (média de SC): crescimento {fmt.num(state['cresc_emprego_pct'], 2)}%, "
                    f"rotatividade {fmt.num(state['rotatividade_pct'], 1)}%.",
-                   "Leitura: regiões no alto e à esquerda trocam muitos trabalhadores sem crescer — sinal de "
-                   "dificuldade de reter mão de obra. Limite: o CEMPRE 2024 é uma aproximação do estoque."],
+                   G.nota("regioes_leitura")],
             rename={"regiao": "Região intermediária", "cresc_emprego_pct": "Crescimento do emprego (%)",
                     "rotatividade_pct": "Rotatividade (%)", "assalariados": "Assalariados (CEMPRE 2024)",
                     "saldo": "Saldo (vagas)", "part_industria_vab_2021": "Indústria no VAB (2021)"},
@@ -207,9 +202,8 @@ def macro_card() -> None:
             m[used], "macrofamilias.csv", key="pn_macro_data",
             notes=[f"Período: {PERIODO}. Abrangência: {scope_lbl[0].lower() + scope_lbl[1:]} de Santa Catarina inteira — não "
                    "acompanha os filtros de região e população da barra lateral.",
-                   "Agrupamento determinístico pelo 1º dígito do código CBO-2002 (Grande Grupo); os grupos 7 e 8 "
-                   "formam a macrofamília operacional.",
-                   "Salário médio inclui todos os salários declarados (ver limites no fim da página)."],
+                   G.nota("macro_agrupamento"),
+                   G.nota("macro_salario")],
             rename={"cbo_grande_grupo": "Macrofamília", "saldo": "Saldo (vagas)", "salario_medio": "Salário médio (R$)",
                     "pct_superior": "Com superior completo", "admissoes": "Admissões", "desligamentos": "Desligamentos"},
             ints=["saldo", "admissoes", "desligamentos"], money=["salario_medio"], pct=["pct_superior"])
@@ -229,8 +223,7 @@ def salary_card() -> None:
             sg[["grau", "salario_medio", "n"]], "salario_por_escolaridade.csv", key="pn_salary_data",
             notes=[f"Período: {PERIODO}. Abrangência: todas as admissões e desligamentos de Santa Catarina "
                    "(não muda com os filtros).",
-                   "Relação descritiva: mostra quanto cada grupo recebe em média, não que a escolaridade cause "
-                   "a diferença. Limite: a média inclui salários zerados e não mensais."],
+                   G.nota("salario_relacao")],
             rename={"grau": "Grau de instrução", "salario_medio": "Salário médio (R$)", "n": "Movimentações"},
             money=["salario_medio"], ints=["n"])
 
@@ -252,7 +245,7 @@ def scatter_card(mun: pd.DataFrame) -> None:
             plotted[used], "renda_escolaridade_municipios.csv", key="pn_scatter_data",
             notes=[f"Período: {PERIODO}. Abrangência: municípios no recorte atual com salário e escolaridade "
                    f"disponíveis ({fmt.integer(len(plotted))} de {fmt.integer(len(d))}).",
-                   "Relação descritiva entre três medidas do mesmo município; não indica causa."],
+                   G.nota("dispersao_relacao")],
             rename={"municipio": "Município", "salario_medio": "Salário médio (R$)",
                     "pct_sup": "Com superior completo (%)", "saldo_por_10k": "Saldo por 10 mil hab.",
                     "movimentacoes": "Movimentações", "saldo": "Saldo (vagas)"},

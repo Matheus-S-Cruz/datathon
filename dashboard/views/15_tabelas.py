@@ -6,6 +6,7 @@ import streamlit as st
 from dashboard import formatting as fmt
 from dashboard.components import tables, ui
 from dashboard.services import analytics as A
+from src import glossario as G
 from src.config import EXTERNAL_DIR
 
 CATALOG = {
@@ -23,17 +24,7 @@ EXTERNAL = {
     "ibge_pib_municipal": "IBGE — PIB 2023 e VAB por atividade 2021",
     "ibge_regioes_sc": "IBGE — divisão regional dos municípios",
 }
-COLUMN_HELP = {
-    "saldo": "Admissões − desligamentos.",
-    "giro": "Admissões + desligamentos.",
-    "saldo_por_10k": "Saldo ÷ população × 10.000.",
-    "giro_por_10k": "Giro ÷ população × 10.000.",
-    "grau_medio": "Escolaridade média na escala ordinal 1 (analfabeto) a 12 (doutorado); 'não identificado' fora.",
-    "pct_superior": "Fração das movimentações com superior completo, pós, mestrado ou doutorado.",
-    "cresc_emprego_pct": "Saldo ÷ assalariados CEMPRE 2024 × 100.",
-    "rotatividade_pct": "Mín(admissões, desligamentos) ÷ assalariados CEMPRE 2024 × 100 (conceito DIEESE).",
-    "part_industria_vab_2021": "VAB da indústria ÷ VAB total, 2021.",
-}
+COLUMN_HELP = G.ajuda_colunas()  # textos vêm do glossário único (src/glossario.py)
 
 
 def main() -> None:
