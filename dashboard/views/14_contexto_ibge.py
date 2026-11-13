@@ -19,7 +19,7 @@ def main() -> None:
 
     c = st.columns([0.5, 0.5], gap="medium")
     with c[0], ui.card(f"Crescimento do emprego formal por {A.REGION_LEVELS[level].lower()}",
-                       "Saldo do CAGED ÷ assalariados do CEMPRE 2024.", key="ib_growth"):
+                       "Saldo do CAGED ÷ assalariados do CEMPRE 2024.", key="ib_growth", scope="estado"):
         charts.show(charts.signed_hbars(reg.sort_values("cresc_emprego_pct", ascending=False), "regiao",
                                         "cresc_emprego_pct", "Crescimento do emprego (%)",
                                         [("saldo", "Saldo", fmt.signed),
@@ -27,7 +27,8 @@ def main() -> None:
                     key="ib_growth_chart")
     with c[1], ui.card("Peso da indústria no valor adicionado (2021)",
                        "VAB da indústria ÷ VAB total, por município. 2021 é o último ano com a abertura por "
-                       "atividade publicada para municípios.", key="ib_vab", tag="PIB dos Municípios"):
+                       "atividade publicada para municípios.", key="ib_vab", tag="PIB dos Municípios",
+                       scope="estado"):
         charts.show(charts.choropleth(mun, A.geojson(), "part_industria_vab_2021", "Indústria no VAB",
                                       [("saldo", "Saldo", fmt.signed),
                                        ("regiao_intermediaria", "Região", str)], diverging=False, height=520,
@@ -36,7 +37,7 @@ def main() -> None:
 
     with ui.card("Economias mais industriais crescem mais?",
                  "Municípios: peso da indústria no VAB × crescimento do emprego formal. Tamanho = assalariados.",
-                 key="ib_scatter"):
+                 key="ib_scatter", scope="estado"):
         d = mun.assign(ind_pct=mun["part_industria_vab_2021"] * 100)
         charts.show(charts.bubble(d, "ind_pct", "cresc_emprego_pct", None, "assalariados", "municipio",
                                   "Indústria no VAB (%)", "Crescimento do emprego (%)", height=460,
@@ -46,7 +47,7 @@ def main() -> None:
         st.caption(f"Correlação de Spearman entre as duas medidas: {fmt.corr(corr)} (295 municípios). "
                    "Correlação não implica causa.")
 
-    with ui.card("Tabela regional", key="ib_table"):
+    with ui.card("Tabela regional", key="ib_table", scope="estado"):
         cols = ["regiao", "populacao", "assalariados", "admissoes", "desligamentos", "saldo", "saldo_por_10k",
                 "cresc_emprego_pct", "rotatividade_pct", "part_industria_vab_2021", "salario_medio", "pct_superior"]
         tables.show(reg[cols], rename={"regiao": "Região", "populacao": "População", "assalariados": "Assalariados",
