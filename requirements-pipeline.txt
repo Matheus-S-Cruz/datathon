@@ -1,0 +1,11 @@
+# Dependências extras do PIPELINE (notebooks/01_pipeline_caged_sc.ipynb) e de relatórios.
+# NÃO são necessárias para rodar o dashboard; não são instaladas no deploy do Streamlit Cloud.
+#
+# Instalar, para reexecutar o pipeline localmente ou no Colab:
+#   pip install -r requirements.txt -r requirements-pipeline.txt
+
+-r requirements.txt
+
+jupyter>=1.0         # executar o notebook (nbconvert + ipykernel)
+polars>=1.0          # alternativa a pandas para dataframes grandes (opcional)
+tabulate>=0.9        # exportação de tabelas em Markdown (relatórios)

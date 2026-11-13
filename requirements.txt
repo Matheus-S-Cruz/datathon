@@ -1,19 +1,18 @@
-# Versões mínimas testadas localmente em 10/11/2026 (Python 3.14).
-# No Google Colab: !pip install -r requirements.txt
-
-# Leitura e processamento
-duckdb>=1.1          # SQL direto sobre o Parquet, sem carregar tudo na memória
-pyarrow>=15          # leitura/escrita de Parquet
-polars>=1.0          # alternativa a pandas para dataframes grandes
-pandas>=2.2          # pequenas tabelas agregadas e integração com gráficos
-openpyxl>=3.1        # leitura do dicionário de dados (.xlsx)
-tabulate>=0.9        # exportação de tabelas em Markdown (relatórios)
-
-# Pipeline (notebooks/01_pipeline_caged_sc.ipynb)
-numpy>=1.26
-jupyter>=1.0         # executar o notebook (nbconvert + ipykernel)
+# Dependências de EXECUÇÃO do dashboard (dashboard/app.py).
+# É este arquivo que o Streamlit Community Cloud instala no deploy — mantido enxuto
+# para o build ser rápido e confiável. As dependências só do pipeline/notebook ficam
+# em requirements-pipeline.txt.
+#
+# Testado com Python 3.12. No Google Colab: !pip install -r requirements.txt
 
 # Interface web (dashboard/). Testado com streamlit 1.67 e plotly 7.1.
 # streamlit >= 1.50 é necessário (st.badge, st.navigation, temas claro/escuro separados).
 streamlit>=1.50
 plotly>=5.20
+
+# Leitura e processamento usados em tempo de execução pelo dashboard
+duckdb>=1.1          # SQL direto sobre o Parquet, sem carregar tudo na memória
+pyarrow>=15          # leitura/escrita de Parquet
+pandas>=2.2          # pequenas tabelas agregadas e integração com gráficos
+numpy>=1.26          # cálculos vetoriais (ponderações, dispersões)
+openpyxl>=3.1        # leitura do dicionário de dados (.xlsx)
