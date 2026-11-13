@@ -111,12 +111,36 @@ def filter_panel(key: str, include=ALL, title: str = "Filtros") -> Q.Filters:
 # Mesmos filtros do dashboard original — só indústria, seções CNAE, população
 # mínima — mais a região geográfica intermediária do IBGE. As chaves são
 # compartilhadas entre as páginas: o recorte acompanha a navegação.
+#
+# Persistência: o Streamlit apaga o estado de um widget quando uma página é
+# executada sem desenhá-lo (ex.: Dicionário, Explorador). Por isso o último
+# recorte escolhido fica também em `_recorte_salvo`, uma chave da sessão que
+# não pertence a nenhum widget, e é devolvido ao widget na próxima página que
+# desenha o recorte. Só as 4 chaves `an_*` são lidas ou escritas aqui; os
+# filtros próprios das outras páginas não são tocados.
 # --------------------------------------------------------------------------- #
 
-def _keep(key: str) -> None:
-    """Mantém o valor do widget no session_state ao trocar de página."""
+_SALVO = "_recorte_salvo"
+POP_OPTIONS = [0, 5_000, 10_000, 20_000, 50_000, 100_000, 200_000]
+
+
+def _restore(key: str, normalize) -> None:
+    """Se o widget `key` foi apagado ao passar por outra página, devolve o último valor escolhido.
+
+    `normalize(valor)` devolve o valor ainda válido para as opções atuais, ou None se não houver
+    nada válido para restaurar. Sem valor salvo, nada é feito: o widget abre no padrão de sempre."""
+    salvo = st.session_state.get(_SALVO, {})
+    if key in st.session_state or key not in salvo:
+        return
+    valor = normalize(salvo[key])
+    if valor is not None:
+        st.session_state[key] = valor
+
+
+def _remember(key: str) -> None:
+    """Guarda o valor atual do widget `key` na memória do recorte."""
     if key in st.session_state:
-        st.session_state[key] = st.session_state[key]
+        st.session_state.setdefault(_SALVO, {})[key] = st.session_state[key]
 
 
 def analysis_scope(sections: bool = True, population: bool = True, region: bool = True):
@@ -128,28 +152,32 @@ def analysis_scope(sections: bool = True, population: bool = True, region: bool 
         st.subheader("Recorte da análise")
         sec: tuple[str, ...] = ()
         if sections:
-            for k in ("an_ind", "an_secoes"):
-                _keep(k)
+            _restore("an_ind", lambda v: v if isinstance(v, bool) else None)
             only_ind = st.toggle("Apenas setores industriais", key="an_ind",
                                  help="Seções CNAE B (Extrativas), C (Transformação), D (Eletricidade e gás) "
                                       "e F (Construção).")
+            _remember("an_ind")
             pool = [s for s in setores["secao"] if not only_ind or s in A.INDUSTRIAL_SECTIONS]
+            # só as seções que existem no grupo atual; seleções inválidas não são recuperadas
+            _restore("an_secoes", lambda v: [s for s in v if s in pool] if isinstance(v, list) else None)
             chosen = st.multiselect("Seções CNAE", pool, key="an_secoes", placeholder="Todas do grupo acima",
                                     format_func=lambda s: f"{s} · {labels.get(s, s)}")
+            _remember("an_secoes")
             chosen = [s for s in chosen if s in pool]
             sec = tuple(chosen) if chosen else (tuple(pool) if only_ind else ())
         reg = None
         if region:
-            _keep("an_regiao")
-            reg = st.selectbox("Região geográfica intermediária (IBGE)", ["Todas"] + A.region_names(),
-                               key="an_regiao")
+            regioes = ["Todas"] + A.region_names()
+            _restore("an_regiao", lambda v: v if v in regioes else None)
+            reg = st.selectbox("Região geográfica intermediária (IBGE)", regioes, key="an_regiao")
+            _remember("an_regiao")
             reg = None if reg == "Todas" else reg
         pop = 0
         if population:
-            _keep("an_pop")
-            pop = st.select_slider("População mínima do município", options=[0, 5_000, 10_000, 20_000, 50_000,
-                                                                              100_000, 200_000],
+            _restore("an_pop", lambda v: v if v in POP_OPTIONS else None)
+            pop = st.select_slider("População mínima do município", options=POP_OPTIONS,
                                    key="an_pop", format_func=lambda v: "sem limite" if v == 0 else fmt.integer(v),
                                    help="Exclui municípios pequenos, cujas taxas por 10 mil habitantes oscilam "
                                         "muito com poucas vagas.")
+            _remember("an_pop")
     return A.Scope(secoes=sec, min_pop=int(pop), regiao=reg)
