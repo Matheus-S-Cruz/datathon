@@ -46,6 +46,7 @@ navigation = st.navigation({
         page("01_overview.py", "Bases e validação", "database", "bases"),
     ],
     "Análises complementares": [
+        page("16_catalogo.py", "Catálogo de análises", "menu_book", "catalogo"),
         page("10_territorio.py", "Território", "map", "territorio"),
         page("11_setores.py", "Setores", "factory", "setores"),
         page("12_renda_escolaridade.py", "Renda e escolaridade", "school", "renda-escolaridade"),

@@ -15,7 +15,7 @@ from streamlit.testing.v1 import AppTest
 APP = Path(__file__).resolve().parents[1] / "dashboard" / "app.py"
 PAGES = ["00_painel", "01_overview", "02_caged_explorer", "03_municipalities", "04_dictionary", "05_audit",
          "06_statistics", "07_relations", "10_territorio", "11_setores", "12_renda_escolaridade",
-         "13_macrofamilias", "14_contexto_ibge", "15_tabelas"]
+         "13_macrofamilias", "14_contexto_ibge", "15_tabelas", "16_catalogo"]
 
 logging.getLogger("streamlit").setLevel(logging.ERROR)
 
